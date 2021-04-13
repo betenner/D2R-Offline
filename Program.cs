@@ -17,7 +17,22 @@ namespace D2ROffline
         static void Main(string[] args)
         {
             // enter your path here
-            string d2rPath = "C:/D2R/Game.exe";
+            if(args.Length < 1)
+            {
+                Console.WriteLine("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE");
+                return;
+            }
+
+            string d2rPath = args[0];
+
+            if(!File.Exists(d2rPath))
+            {
+                Console.WriteLine($"Error, {d2rPath} does not exist!");
+                Console.WriteLine("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE");
+                return;
+            }
+
+            Console.WriteLine("   ______  _____ _____  ______       _____  _______ _______ _______ _     _ _______  ______ \n   |     \\   |     |   |_____/      |_____] |_____|    |    |       |_____| |______ |_____/ \n   |_____/ __|__ __|__ |    \\_      |       |     |    |    |_____  |     | |______ |    \\_ \n\n   v0.1.62115.0                                                         ~ Ferib Hellscream\n");
 
             Console.WriteLine("Launching game...");
 
@@ -25,7 +40,7 @@ namespace D2ROffline
             var d2r = Process.Start(pInfo);
 
             Console.WriteLine("Process started...");
-            Thread.Sleep(690); // wait for things to unpack..
+            Thread.Sleep(1100); // wait for things to unpack..
 
             //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
 
@@ -54,9 +69,8 @@ namespace D2ROffline
             NtResumeProcess(hProcess);
             CloseHandle(hProcess);
             Console.WriteLine("Done!");
-            Console.ReadKey();
-
         }
+
         public static IntPtr RemapMemoryRegion(IntPtr processHandle, IntPtr baseAddress, int regionSize, MemoryProtectionConstraints mapProtection)
         {
             IntPtr addr = VirtualAllocEx(processHandle, IntPtr.Zero, regionSize, MemoryAllocationType.MEM_COMMIT | MemoryAllocationType.MEM_RESERVE, mapProtection);

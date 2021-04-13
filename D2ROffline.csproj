@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>Remap_Memory_Region</RootNamespace>
+    <Description>Diablo II Resurected Offline Patcher</Description>
   </PropertyGroup>
 
 </Project>

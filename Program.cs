@@ -1,14 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Linq;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Net.Sockets;
-using System.Net;
+using System.Runtime.InteropServices;
 using System.Threading;
-using System.Diagnostics;
 
 namespace D2ROffline
 {
@@ -17,7 +11,7 @@ namespace D2ROffline
         static void Main(string[] args)
         {
             // enter your path here
-            if(args.Length < 1)
+            if (args.Length < 1)
             {
                 Console.WriteLine("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE");
                 return;
@@ -25,22 +19,22 @@ namespace D2ROffline
 
             string d2rPath = args[0];
 
-            if(!File.Exists(d2rPath))
+            if (!File.Exists(d2rPath))
             {
                 Console.WriteLine($"Error, {d2rPath} does not exist!");
                 Console.WriteLine("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE");
                 return;
             }
 
+            // NOTE: if you are going to copy & modify this then please atleast write my name correct!
             Console.WriteLine("   ______  _____ _____  ______       _____  _______ _______ _______ _     _ _______  ______ \n   |     \\   |     |   |_____/      |_____] |_____|    |    |       |_____| |______ |_____/ \n   |_____/ __|__ __|__ |    \\_      |       |     |    |    |_____  |     | |______ |    \\_ \n\n   v0.1.62115.0                                                         ~ Ferib Hellscream\n");
-
             Console.WriteLine("Launching game...");
 
             var pInfo = new ProcessStartInfo(d2rPath);
             var d2r = Process.Start(pInfo);
 
             Console.WriteLine("Process started...");
-            Thread.Sleep(1100); // wait for things to unpack..
+            Thread.Sleep(1500); // wait for things to unpack..
 
             //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
 
@@ -125,16 +119,8 @@ namespace D2ROffline
 
             MemoryProtectionConstraints old = MemoryProtectionConstraints.PAGE_NOACCESS;
 
-            // Offset Credits: king48488 @ Ownedcore.com
-            byte[] patch_1 = { 0x90, 0x90 };
-            byte[] patch_2 = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-            byte[] patch_3 = { 0x90, 0xB0, 0x01 };
-            if (!WriteProcessMemory(processHandle, baseAddress + 0xD4AD68, patch_1, patch_1.Length, out IntPtr bWritten1) || (int)bWritten1 != patch_1.Length)
-                Console.WriteLine("Patch 1 failed!!");
-            if (!WriteProcessMemory(processHandle, baseAddress + 0xD4E25F, patch_2, patch_2.Length, out IntPtr bWritten2) || (int)bWritten2 != patch_2.Length)
-                Console.WriteLine("Patch 2 failed!!");
-            if (!WriteProcessMemory(processHandle, baseAddress + 0xCAFB9D, patch_3, patch_3.Length, out IntPtr bWritten3) || (int)bWritten3 != patch_3.Length)
-                Console.WriteLine("Patch 3 failed!!");
+            // apply all request patches
+            ApplyAllPatches(processHandle, baseAddress);
 
             //crc32 bypass
             //search for F2 ?? 0F 38 F1 - F2 REX.W 0F 38 F1 /r CRC32 r64, r/m64	RM	Valid	N.E.	Accumulate CRC32 on r/m64.
@@ -151,11 +137,13 @@ namespace D2ROffline
                     }
                 }
                 if (isMatch)
-                {
-                    Console.WriteLine(((long)baseAddress + i).ToString("X"));
                     detourCRC(processHandle, (long)baseAddress + i, (long)baseAddress, (long)copyBufEx);
-                }
             }
+
+            // NOTE: uncomment if you want to snitch a hook inside the .text before it remaps back from RWX to RX
+            //Console.WriteLine("Patching complete..");
+            //Console.WriteLine("[!] Press any key to remap and resume proces...");
+            //Console.ReadKey();
 
             // remap
             status = NtUnmapViewOfSection(processHandle, baseAddress);
@@ -181,9 +169,44 @@ namespace D2ROffline
             if (!VirtualFree(copyBuf, 0, MemFree.MEM_RELEASE))
                 return IntPtr.Zero;
 
-
-            Console.WriteLine("Patching process..");
             return addr;
+        }
+
+        private static void ApplyAllPatches(IntPtr processHandle, IntPtr baseAddress)
+        {
+            // NOTE: you can make a 'patches.txt' file, using the format '0x1234:9090' where 0x1234 indicates the offset (game.exe+0x1234) and 9090 indicates the patch value (nop nop)
+            // Local Patch Offset Credits: king48488 @ Ownedcore.com
+            string testFormat = "0xD4AD68:9090\n0xD4E25F:909090909090\n0xCAFB9D:90B001\n0x597E1C:90909090909090"; // nop slide `lea eax, [betaEnabled]
+            if (File.Exists("patches.txt"))
+                testFormat = File.ReadAllText("patches.txt");
+
+            string[] split = testFormat.Split('\n');
+            int[] addr = new int[split.Length];
+            byte[][] patch = new byte[split.Length][];
+
+            // init arrays
+            for (int i = 0; i < split.Length; i++)
+            {
+                string[] data = split[i].Split(':');
+                if (data.Length < 2)
+                    continue; // probs empty line
+                addr[i] = Convert.ToInt32(data[0], 0x10);
+                patch[i] = new byte[data[1].Length / 2];
+                for (int j = 0; j < patch[i].Length; j++)
+                    patch[i][j] = Convert.ToByte(data[1].Substring(j * 2, 2), 0x10);
+            }
+
+            // patch arrays
+            for (int i = 0; i < split.Length; i++)
+            {
+                if (addr[i] == 0)
+                    continue;
+
+                Console.WriteLine($"Patching base+{addr[i].ToString("X4")}");
+                if (!WriteProcessMemory(processHandle, IntPtr.Add(baseAddress, addr[i]), patch[i], patch[i].Length, out IntPtr bWritten1) || (int)bWritten1 != patch[i].Length)
+                    Console.WriteLine($"Patch {i} failed!!");
+            }
+
         }
 
         public static bool detourCRC(IntPtr processHandle, long crcLocation, long wowBase, long wowCopyBase)
@@ -211,7 +234,7 @@ namespace D2ROffline
                 0x50,                                                               //push rax
                 0x48, 0x8B, 0xC1,                                                   //mov rax, rcx
                 0x8B, 0x89, 0x58, 0x02, 0x00, 0x00,                                 //mov ecx, [r1+0x258] // Raw Size
-                0x90, 
+                0x90,
                 0x48, 0x01, 0xC1,                                                   //add rcx,rax
                 0x8B, 0x80, 0x54, 0x02, 0x00, 0x00,                                 //mov eax,[rax+0x254] // Virtual Address
                 0x90,
@@ -236,7 +259,7 @@ namespace D2ROffline
             #endregion asmCave
 
             IntPtr CaveAddr = VirtualAllocEx(processHandle, IntPtr.Zero, crcCave.Length, MemoryAllocationType.MEM_COMMIT, MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE);
-            if(CaveAddr == IntPtr.Zero)
+            if (CaveAddr == IntPtr.Zero)
             {
                 Console.WriteLine("VirtualAlloxEx error");
                 return false;
@@ -269,7 +292,7 @@ namespace D2ROffline
             {
                 //jb is the last instruction and starts with 0x72 (2 bytes long)
                 crcCave[0x49 + i] = crcBuffer[i];                   //write byte to codecave
-                if(crcBuffer[i] == 0x72)
+                if (crcBuffer[i] == 0x72)
                 {
                     crcCave[0x49 + i + 1] = crcBuffer[i + 1];       //include last byte of JB instruction before breaking
                     origCrcInstructionLength = i + 2;               //Keep track of bytes used to NOP later
@@ -278,7 +301,7 @@ namespace D2ROffline
                 }
             }
 
-            if(!isJmpFound)
+            if (!isJmpFound)
             {
                 Console.WriteLine("NOPE");
                 return false;
@@ -286,17 +309,17 @@ namespace D2ROffline
 
             //list used registers rax,   rcx,   rdx,   rbx,   rsp,   rbp,   rsi,   rdi
             bool[] usedRegs = { false, false, false, false, false, false, false, false };     //rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi
-             
+
 
             //check byte code to find used stuff
-            usedRegs[(crcBuffer[0x05]-0x04)/8] = true;              //x,[reg+reg*8]
-            usedRegs[(crcBuffer[0x09]-0xC0)] = true;                //inc x
+            usedRegs[(crcBuffer[0x05] - 0x04) / 8] = true;              //x,[reg+reg*8]
+            usedRegs[(crcBuffer[0x09] - 0xC0)] = true;                //inc x
 
-            if(crcBuffer[0x0C] >= 0xC0 && crcBuffer[0x0C] < 0xC8)
-                usedRegs[(crcBuffer[0x0C]-0xC0)] = true;            // cmp ?, x
+            if (crcBuffer[0x0C] >= 0xC0 && crcBuffer[0x0C] < 0xC8)
+                usedRegs[(crcBuffer[0x0C] - 0xC0)] = true;            // cmp ?, x
 
             byte selectReg = 0;
-            for(byte r = 0; r < usedRegs.Length; r++)
+            for (byte r = 0; r < usedRegs.Length; r++)
             {
                 if (usedRegs[r] == false)
                 {
@@ -306,7 +329,7 @@ namespace D2ROffline
             }
 
             //change Detour register to non-used register
-            for(int i = 0; i < crcDetourRegOffsets.Length; i++)
+            for (int i = 0; i < crcDetourRegOffsets.Length; i++)
             {
                 crcDetour[crcDetourRegOffsets[i]] += selectReg;      //increase byte to set selected register
             }
@@ -327,9 +350,9 @@ namespace D2ROffline
 
             //add nops to end of the detour buffer
             byte[] crcDetourFixed = new byte[origCrcInstructionLength];
-            for(int i = 0; i < origCrcInstructionLength; i++)
+            for (int i = 0; i < origCrcInstructionLength; i++)
             {
-                if(i < crcDetour.Length)
+                if (i < crcDetour.Length)
                 {
                     //Copy byte from crcDetour to fixed crcDetour
                     crcDetourFixed[i] = crcDetour[i];
@@ -346,7 +369,7 @@ namespace D2ROffline
                 Console.WriteLine("Writing CRC detour failed");
                 return false;
             }
-            if(!WriteProcessMemory(processHandle, CaveAddr, crcCave, crcCave.Length, out bWrite))
+            if (!WriteProcessMemory(processHandle, CaveAddr, crcCave, crcCave.Length, out bWrite))
             {
                 Console.WriteLine("Writing CRC CodeCave failed");
                 return false;

@@ -22,6 +22,18 @@ Move to output
 Finally, launch the executable using `path` to `game.exe` as argument
 ``./D2ROffline.exe C:/D2R/Game.exe``
 
+## Custom Patches
+
+There is a neat little feature that allows you to create a `patches.txt` file that you can place inside the folder, next to the .exe.
+This allows you to create your own patches, here is an example:
+```
+0xD4AD68:9090
+0xD4E25F:909090909090
+0xCAFB9D:90B001
+0x597E1C:90909090909090
+```
+These are already hardcoded inside the tool, but will be overruled once the `patches.txt` file is found.
+
 # Download Game Files
 
 Download this project: https://github.com/barncastle/Battle.Net-Installer/releases/tag/v1.3

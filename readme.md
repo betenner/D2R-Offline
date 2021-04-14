@@ -28,4 +28,5 @@ Download this project: https://github.com/barncastle/Battle.Net-Installer/releas
 Then use as `BNetInstaller.exe --prod osib --lang enus --dir "C:\D2R"`
 
 ## Credits
+ - Ferib *(me)*: [crc32 bypass](https://ferib.dev/blog.php?l=post/Bypassing_World_of_Warcraft_Crc32_Integrity_Checks)
  - king48488: [Patch locations](https://www.ownedcore.com/forums/diablo-2-resurrected/diablo-2-resurrected-bots-programs/940315-some-basic-offsets-let-you-play-offline.html)

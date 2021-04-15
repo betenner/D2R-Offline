@@ -40,7 +40,7 @@ namespace D2ROffline
             var d2r = Process.Start(pInfo);
 
             ConsolePrint("Process started...");
-            Thread.Sleep(1100); // wait for things to unpack.. TODO: use different approach
+            Thread.Sleep(400); // wait for things to unpack.. TODO: use different approach
 
             //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
 
@@ -62,6 +62,10 @@ namespace D2ROffline
             IntPtr regionSize = basicInformation.regionSize;
 
             NtSuspendProcess(hProcess);
+
+            // continue until process has been inited
+            ResumeToEntrypoint(hProcess, regionBase, (uint)d2r.Threads[0].Id);
+
             ConsolePrint("Process suspended");
             ConsolePrint("Remapping process..");
             IntPtr addr = RemapMemoryRegion(hProcess, regionBase, regionSize.ToInt32(), MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE);
@@ -178,9 +182,6 @@ namespace D2ROffline
 
             MemoryProtectionConstraints old = MemoryProtectionConstraints.PAGE_NOACCESS;
 
-            // apply all request patches
-            ApplyAllPatches(processHandle, baseAddress);
-
             //crc32 bypass
             //search for F2 ?? 0F 38 F1 - F2 REX.W 0F 38 F1 /r CRC32 r64, r/m64	RM	Valid	N.E.	Accumulate CRC32 on r/m64.
             byte[] AoBpattern = { 0xF2, 0x42, 0x0F, 0x38, 0xF1 };
@@ -198,6 +199,9 @@ namespace D2ROffline
                 if (isMatch)
                     detourCRC(processHandle, (long)baseAddress + i, (long)baseAddress, (long)copyBufEx);
             }
+
+            // apply all request patches
+            ApplyAllPatches(processHandle, baseAddress);
 
             // NOTE: uncomment if you want to snitch a hook inside the .text before it remaps back from RWX to RX
             //ConsolePrint("Patching complete..");
@@ -229,6 +233,70 @@ namespace D2ROffline
                 return IntPtr.Zero;
 
             return addr;
+        }
+
+        private static void ResumeToEntrypoint(IntPtr processHandle, IntPtr baseAddress, uint threadId)
+        {
+            // patch inf loop at entry point
+            //byte[] origByes = new byte[2];
+            //if (!ReadProcessMemory(processHandle, baseAddress + 0x1000, origByes, origByes.Length, out _) || !WriteProcessMemory(processHandle, baseAddress + 0x1000, new byte[] { 0xEB, 0xFE }, 2, out _)) // entrypoint
+            //{
+            //    ConsolePrint("Failed writing initial process memory", ConsoleColor.Red);
+            //    return;
+            //}
+
+            IntPtr tHandle = OpenThread(ThreadAccess.GET_CONTEXT, false, threadId);
+
+            // now waiting for game  to lock in inf loop
+            ConsolePrint("Waiting for process exectuion...");
+            int count = 0;
+            while (count < 100) // 5000ms timeout
+            {
+                // NOTE: i tried the below thing to wait for entry point but there is some detection blocking it
+                //CONTEXT64 tContext = new CONTEXT64();
+                //tContext.ContextFlags = CONTEXT_FLAGS.CONTEXT_FULL;
+                //GetThreadContext(tHandle, ref tContext);
+                //ConsolePrint(tContext.Rip.ToString("X16"), ConsoleColor.Cyan);
+
+                //if (tContext.Rip == (ulong)baseAddress + 0x1000 || tContext.Rip == (ulong)baseAddress + 0x1001) // .text section dimension
+                //{
+                //    if (!WriteProcessMemory(processHandle, baseAddress + 0x1000, origByes, origByes.Length, out _)) // restore entrypoint
+                //    {
+                //        ConsolePrint("Failed writing initial process memory", ConsoleColor.Red);
+                //        return;
+                //    }
+                //    tContext.Rip = (ulong)baseAddress + 0x1000; // fix RIP
+                //    SetThreadContext(tHandle, ref tContext);
+                //    break;
+                //}
+
+                // NOTE: temp fix, using shalzuth solution
+                byte[] buff = new byte[4];
+                if (!ReadProcessMemory(processHandle, baseAddress + 0x23C9EB8, buff, buff.Length, out _)) // entrypoint
+                {
+                    ConsolePrint("Failed writing initial process memory", ConsoleColor.Red);
+                    return;
+                }
+                bool isReady = true;
+                foreach(var b in buff)
+                {
+                    if(b == 0x00)
+                    {
+                        isReady = false;
+                        break;
+                    }     
+                }
+
+                if (isReady)
+                    break;
+
+                NtResumeProcess(processHandle);
+                Thread.Sleep(50); // continue execution
+                NtSuspendProcess(processHandle);
+                count++;
+            }
+
+            CloseHandle(tHandle);
         }
 
         private static void ApplyAllPatches(IntPtr processHandle, IntPtr baseAddress)

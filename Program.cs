@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -10,10 +11,11 @@ namespace D2ROffline
     {
         static void Main(string[] args)
         {
-            // enter your path here
+            string version = "v0.1.62115.0";
+
             if (args.Length < 1)
             {
-                Console.WriteLine("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE");
+                ConsolePrint("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE", ConsoleColor.White);
                 return;
             }
 
@@ -21,48 +23,105 @@ namespace D2ROffline
 
             if (!File.Exists(d2rPath))
             {
-                Console.WriteLine($"Error, {d2rPath} does not exist!");
-                Console.WriteLine("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE");
+                ConsolePrint($"Error, {d2rPath} does not exist!", ConsoleColor.Red);
+                ConsolePrint("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE", ConsoleColor.White);
                 return;
             }
 
             // NOTE: if you are going to copy & modify this then please atleast write my name correct!
-            Console.WriteLine("   ______  _____ _____  ______       _____  _______ _______ _______ _     _ _______  ______ \n   |     \\   |     |   |_____/      |_____] |_____|    |    |       |_____| |______ |_____/ \n   |_____/ __|__ __|__ |    \\_      |       |     |    |    |_____  |     | |______ |    \\_ \n\n   v0.1.62115.0                                                         ~ Ferib Hellscream\n");
-            Console.WriteLine("Launching game...");
+            PrintASCIIArt(); // 'colored' logo
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"			                                       _____  _______ _______ _______ _     _ _______  ______ \n {version.PadRight(16)}			                      |_____] |_____|    |    |       |_____| |______ |_____/ \n______________________________________________________________|       |     |    |    |_____  |     | |______ |    \\_ \n");
+            Console.ForegroundColor = ConsoleColor.Gray;
+
+            ConsolePrint("Launching game...");
 
             var pInfo = new ProcessStartInfo(d2rPath);
             var d2r = Process.Start(pInfo);
 
-            Console.WriteLine("Process started...");
-            Thread.Sleep(1500); // wait for things to unpack..
+            ConsolePrint("Process started...");
+            Thread.Sleep(1100); // wait for things to unpack.. TODO: use different approach
 
             //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
 
-            Console.WriteLine("Suspending process...");
+            ConsolePrint("Suspending process...");
             IntPtr hProcess = OpenProcess(ProcessAccessFlags.PROCESS_ALL_ACCESS, false, d2r.Id);
 
             if (hProcess == IntPtr.Zero)
             {
-                Console.WriteLine("Failed on OpenProcess. Handle is invalid.");
+                ConsolePrint("Failed on OpenProcess. Handle is invalid.", ConsoleColor.Red);
                 return;
             }
 
             if (VirtualQueryEx(hProcess, d2r.MainModule.BaseAddress, out MEMORY_BASIC_INFORMATION basicInformation, Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) == 0)
             {
-                Console.WriteLine("Failed on VirtualQueryEx. Return is 0 bytes.");
+                ConsolePrint("Failed on VirtualQueryEx. Return is 0 bytes.", ConsoleColor.Red);
                 return;
             }
             IntPtr regionBase = basicInformation.baseAddress;
             IntPtr regionSize = basicInformation.regionSize;
 
             NtSuspendProcess(hProcess);
-            Console.WriteLine("Process suspended");
-            Console.WriteLine("Remapping process..");
+            ConsolePrint("Process suspended");
+            ConsolePrint("Remapping process..");
             IntPtr addr = RemapMemoryRegion(hProcess, regionBase, regionSize.ToInt32(), MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE);
-            Console.WriteLine("Resuming process..");
+            ConsolePrint("Resuming process..");
             NtResumeProcess(hProcess);
             CloseHandle(hProcess);
-            Console.WriteLine("Done!");
+            ConsolePrint("Done!", ConsoleColor.Green);
+        }
+
+        private static void PrintASCIIArt()
+        {
+            // print chars individual to set color
+            // NOTE: thanks @pairofdocs for ASCII art (https://github.com/ferib/D2R-Offline/pull/4)
+            string Diablo2ASCII = "                                        ..\n                                  .,.  .*,\n                             ,.  ./ (((#(*                                ,\n                            *(*, */#%#/*,                                */.        ..\n                           .* *##(#%((//.         ..   ,.               ./#*.  .,.   *((/.\n                            , *(%%#%(/*. .,.    .**,.**.        .        ,(%%%#(%(.  *%#*\n   ...                        ./ &%%%/*,./(* ,/(///((/*.       ,.         .*#%#%%%(#%&#*\n   ,,,.                        .*%.%%%%#%(/**#%##%#*    /.  ,/(. *,.,*****(#%%%%%&,%/.                   .,*,\n   ,/(*,.                        ,/&  /&%%%%%%%%%%#((((#/   ,%#((##%##%%%%%%%&,  #*                     ,*((*,.\n    **%%#/**,,.                    .*%             .%((*    ./(%              *%/                    ..,/#%#/,,.\n  ,(%%%%#((#%((/(*.           .,    */#&         .%(/          ,*(*          #,                    .,*(%&&&%%#(,,.\n ., (&           / (/*        .,/*.    ,*##      .,(#(*          .*/#         %*      ..,           ,*#(         ##/,\n  .*#,  &(**(%&   &/,      /(#(**,.   *(%   ,,**#(*/.       .,*(%*(,,,      /,    ,*/#,          ./#  .%(**/%    &(/\n  , ((, &/,,/##&   &*     .*&  .*(,.  ,/% .,///% .%//       ,(* ,,,**#//    (/  ,((###%,         *#  ,%#/,. ,(%   &(,\n  *((, &/,, *#(%   #(      ,/&  *(*,   /& ,./( /%&. &*      .,(.  %#  .(,   %*  .(#  &(/        *%   @#(#*.. ,#.   #,\n  ,/#,  &/,.,(#&   #(.    .,(%  */*.  .*& .*(  &##&  %/,     *(.  %%,  &,.  #   *(#  &%*(,,     /%   /#(#/,  ,#(   #,\n  , (%, &/, ..*#,   %*     .,(&  *#*,  ./& ,#.  &(/#  /(,    ./#.  @&   %*   (.  /(#  @&&#,#.    ,(,   &##*. ./%.  //.\n ./#&.  &%#%%@    &*.      ,(((((#/,  *(& */**/**/%  &*      ***,,/,,*.     /.   /((((((%(.      *(.   &%/*/#%,  *(.\n.*#&            @(,                   */&        #. %,           *%         /*                    */%.         ,#*\n, (* @%#####((/*,                  ., ,*#&       # &*..           ./         %,                       ,/(#&%%#/,\n,#(,                             .(///(%#     ((,/.*#.          ,,(         %*\n                                .((%#%%,          /%%(/*       .(&           &##/,\n                                ./#&&&&&&&&&&&&&&&&&&%%*,   *&%%%%%%%%%%%%%%%%%%%&(                ~ Ferib Hellscream";
+            Dictionary<char, ConsoleColor> colorMapping = new Dictionary<char, ConsoleColor>()
+            {
+                { '.', ConsoleColor.Yellow },
+                { ',', ConsoleColor.Yellow },
+                { '*', ConsoleColor.Yellow },
+                { '%', ConsoleColor.DarkYellow },
+                { '#', ConsoleColor.DarkYellow },
+                { '@', ConsoleColor.DarkYellow },
+                { '/', ConsoleColor.DarkYellow },
+                { '(', ConsoleColor.DarkYellow },
+                { '&', ConsoleColor.DarkYellow },
+            };
+
+            ConsoleColor oldf = Console.ForegroundColor;
+            ConsoleColor oldb = Console.BackgroundColor;
+            ConsoleColor lastColor = oldf;
+            string buffer = "";
+            for (int i = 0; i < Diablo2ASCII.Length; i++)
+            {
+
+                ConsoleColor currentColor;
+                if (colorMapping.TryGetValue(Diablo2ASCII[i], out currentColor))
+                {
+                    if (currentColor != lastColor)
+                    {
+                        lastColor = colorMapping[Diablo2ASCII[i]];
+                        Console.Write(buffer);
+                        buffer = "";
+                        Console.ForegroundColor = lastColor;
+                    }
+                }
+                buffer += Diablo2ASCII[i];
+            }
+            Console.WriteLine(buffer);
+            Console.ForegroundColor = ConsoleColor.Black;
+            Console.BackgroundColor = ConsoleColor.DarkGray;
+            Console.ForegroundColor = oldf;
+            Console.BackgroundColor = oldb;
+        }
+
+        private static void ConsolePrint(string str, ConsoleColor color = ConsoleColor.Gray)
+        {
+            ConsoleColor old = Console.ForegroundColor;
+            Console.ForegroundColor = color;
+            Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss.fffff")}]: {str}");
+            Console.ForegroundColor = old;
         }
 
         public static IntPtr RemapMemoryRegion(IntPtr processHandle, IntPtr baseAddress, int regionSize, MemoryProtectionConstraints mapProtection)
@@ -141,8 +200,8 @@ namespace D2ROffline
             }
 
             // NOTE: uncomment if you want to snitch a hook inside the .text before it remaps back from RWX to RX
-            //Console.WriteLine("Patching complete..");
-            //Console.WriteLine("[!] Press any key to remap and resume proces...");
+            //ConsolePrint("Patching complete..");
+            //ConsolePrint("[!] Press any key to remap and resume proces...", ConsoleColor.Yellow);
             //Console.ReadKey();
 
             // remap
@@ -202,9 +261,9 @@ namespace D2ROffline
                 if (addr[i] == 0)
                     continue;
 
-                Console.WriteLine($"Patching base+{addr[i].ToString("X4")}");
+                ConsolePrint($"Patching base+{addr[i].ToString("X4")}");
                 if (!WriteProcessMemory(processHandle, IntPtr.Add(baseAddress, addr[i]), patch[i], patch[i].Length, out IntPtr bWritten1) || (int)bWritten1 != patch[i].Length)
-                    Console.WriteLine($"Patch {i} failed!!");
+                    ConsolePrint($"Patch {i} failed!!", ConsoleColor.Red);
             }
 
         }
@@ -261,7 +320,7 @@ namespace D2ROffline
             IntPtr CaveAddr = VirtualAllocEx(processHandle, IntPtr.Zero, crcCave.Length, MemoryAllocationType.MEM_COMMIT, MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE);
             if (CaveAddr == IntPtr.Zero)
             {
-                Console.WriteLine("VirtualAlloxEx error");
+                ConsolePrint("VirtualAlloxEx error", ConsoleColor.Red);
                 return false;
             }
 
@@ -282,7 +341,7 @@ namespace D2ROffline
             byte[] crcBuffer = new byte[88];
             if (!ReadProcessMemory(processHandle, (IntPtr)crcLocation, crcBuffer, crcBuffer.Length, out IntPtr bRead))
             {
-                Console.WriteLine("Reading CRC location failed");
+                ConsolePrint("Reading CRC location failed", ConsoleColor.Red);
                 return false;
             }
 
@@ -303,7 +362,7 @@ namespace D2ROffline
 
             if (!isJmpFound)
             {
-                Console.WriteLine("NOPE");
+                ConsolePrint("NOPE", ConsoleColor.Red);
                 return false;
             }
 
@@ -366,16 +425,16 @@ namespace D2ROffline
 
             if (!WriteProcessMemory(processHandle, (IntPtr)(crcLocation), crcDetourFixed, crcDetourFixed.Length, out IntPtr bWrite))
             {
-                Console.WriteLine("Writing CRC detour failed");
+                ConsolePrint("Writing CRC detour failed", ConsoleColor.Red);
                 return false;
             }
             if (!WriteProcessMemory(processHandle, CaveAddr, crcCave, crcCave.Length, out bWrite))
             {
-                Console.WriteLine("Writing CRC CodeCave failed");
+                ConsolePrint("Writing CRC CodeCave failed", ConsoleColor.Red);
                 return false;
             }
 
-            Console.WriteLine($"Bypassed CRC at {crcLocation.ToString("X")}"); // to {CaveAddr.ToString("X")}");
+            ConsolePrint($"Bypassed CRC at {crcLocation.ToString("X")}"); // to {CaveAddr.ToString("X")}");
             return true;
         }
 

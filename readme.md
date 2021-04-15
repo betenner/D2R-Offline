@@ -37,7 +37,7 @@ These are already hardcoded inside the tool, but will be overruled once the `pat
 ## Download Game Files
 
 Download this project: https://github.com/barncastle/Battle.Net-Installer/releases/tag/v1.3
-Then use as `BNetInstaller.exe --prod osib --lang enus --dir "C:\D2R"`
+Then use as `BNetInstaller.exe --prod osib --uid osi_beta --lang enus --dir "C:\D2R"`
 
 ## Notices
 This repository is for educational purposes only. 

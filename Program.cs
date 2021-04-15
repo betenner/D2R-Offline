@@ -53,6 +53,9 @@ namespace D2ROffline
                 return;
             }
 
+            // suspend process
+            NtSuspendProcess(hProcess);
+
             if (VirtualQueryEx(hProcess, d2r.MainModule.BaseAddress, out MEMORY_BASIC_INFORMATION basicInformation, Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) == 0)
             {
                 ConsolePrint("Failed on VirtualQueryEx. Return is 0 bytes.", ConsoleColor.Red);
@@ -60,8 +63,6 @@ namespace D2ROffline
             }
             IntPtr regionBase = basicInformation.baseAddress;
             IntPtr regionSize = basicInformation.regionSize;
-
-            NtSuspendProcess(hProcess);
 
             // continue until process has been inited
             ResumeToEntrypoint(hProcess, regionBase, (uint)d2r.Threads[0].Id);
@@ -278,15 +279,14 @@ namespace D2ROffline
                     return;
                 }
                 bool isReady = true;
-                foreach(var b in buff)
+                foreach (var b in buff)
                 {
-                    if(b == 0x00)
+                    if (b == 0x00)
                     {
                         isReady = false;
                         break;
-                    }     
+                    }
                 }
-
                 if (isReady)
                     break;
 
@@ -303,11 +303,18 @@ namespace D2ROffline
         {
             // NOTE: you can make a 'patches.txt' file, using the format '0x1234:9090' where 0x1234 indicates the offset (game.exe+0x1234) and 9090 indicates the patch value (nop nop)
             // Local Patch Offset Credits: king48488 @ Ownedcore.com
-            string testFormat = "0xD4AD68:9090\n0xD4E25F:909090909090\n0xCAFB9D:90B001\n0x597E1C:90909090909090"; // nop slide `lea eax, [betaEnabled]
+            // NOTE: remove defaults as they will become outdated when game updates and may causes crashes or unwanted behavior when no custom patches.txt is provided?
+            string patchesContent = "0xD4AD68:9090\n0xD4E25F:909090909090\n0xCAFB9D:90B001\n0x597E1C:90909090909090"; // nop slide `lea eax, [betaEnabled]
             if (File.Exists("patches.txt"))
-                testFormat = File.ReadAllText("patches.txt");
+                patchesContent = File.ReadAllText("patches.txt");
 
-            string[] split = testFormat.Split('\n');
+            if(patchesContent == "")
+            {
+                ConsolePrint("WARNING: Not patches are beeing loaded. (If this is unexpected, double check your 'patches.txt' file!)", ConsoleColor.Yellow);
+                return;
+            }
+
+            string[] split = patchesContent.Split('\n');
             int[] addr = new int[split.Length];
             byte[][] patch = new byte[split.Length][];
 

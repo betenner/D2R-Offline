@@ -7,4 +7,10 @@
     <Description>Diablo II Resurected Offline Patcher</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Update="patches.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

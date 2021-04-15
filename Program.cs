@@ -15,7 +15,7 @@ namespace D2ROffline
 
             if (args.Length < 1)
             {
-                ConsolePrint("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE", ConsoleColor.White);
+                ConsolePrint("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE [-txt]", ConsoleColor.White);
                 return;
             }
 
@@ -24,7 +24,7 @@ namespace D2ROffline
             if (!File.Exists(d2rPath))
             {
                 ConsolePrint($"Error, {d2rPath} does not exist!", ConsoleColor.Red);
-                ConsolePrint("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE", ConsoleColor.White);
+                ConsolePrint("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE [-txt]", ConsoleColor.White);
                 return;
             }
 
@@ -37,6 +37,12 @@ namespace D2ROffline
             ConsolePrint("Launching game...");
 
             var pInfo = new ProcessStartInfo(d2rPath);
+
+            if (args.Length != 1)
+                pInfo.Arguments = args[1];
+            else 
+                ConsolePrint("Extra parameters not found. Proceeding...", ConsoleColor.DarkYellow);
+
             var d2r = Process.Start(pInfo);
 
             ConsolePrint("Process started...");

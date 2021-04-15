@@ -40,7 +40,7 @@ namespace D2ROffline
             var d2r = Process.Start(pInfo);
 
             ConsolePrint("Process started...");
-            Thread.Sleep(1100); // wait for things to unpack.. TODO: use different approach
+            //Thread.Sleep(1100); // wait for things to unpack.. TODO: use different approach
 
             //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
 
@@ -287,23 +287,37 @@ namespace D2ROffline
             byte[] crcCave =
             {
                 0x51,                                                               //push rcx
-                0x48, 0xB9, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         //mov rcx, wowBase (0x03)
+                0x48, 0xB9, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         //mov rcx, imgBase (0x03)
                 0x48, 0x39, 0xCF,                                                   //cmp r2, rcx - 0x0B
                 0x7C, 0x38,                                                         //jl crc
                 0x50,                                                               //push rax
                 0x48, 0x8B, 0xC1,                                                   //mov rax, rcx
-                0x8B, 0x89, 0x58, 0x02, 0x00, 0x00,                                 //mov ecx, [r1+0x258] // Raw Size
+                0x8B, 0x89, 0x58, 0x02, 0x00, 0x00,                                 //mov ecx, [r1+0x258] // .text Raw Size
                 0x90,
                 0x48, 0x01, 0xC1,                                                   //add rcx,rax
-                0x8B, 0x80, 0x54, 0x02, 0x00, 0x00,                                 //mov eax,[rax+0x254] // Virtual Address
+                0x8B, 0x80, 0x54, 0x02, 0x00, 0x00,                                 //mov eax,[rax+0x254] // .text Virtual Address
                 0x90,
                 0x48, 0x01, 0xC1,                                                   //add rcx,rax
                 0x58,                                                               //pop rax
                 0x48, 0x39, 0xCF,                                                   //cmp r2, rcx - 0x29
                 0x7F, 0x1A,                                                         //jg crc
-                0x48, 0xB9, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         //mov rcx, Wowbase (0x30)
+                
+                // TODO: update codecave with assembly below (and offset crcCaveRegInstructOffsets offsets)
+
+                // psuh rax
+                // mov eax, rcx
+                // mov ecx, [r1+0x280]  // .rdata Raw Size
+                // nop
+                // add rcx, rax
+                // mov eax, [rax+0x27C] // .rdata Virtual Address
+                // nop
+                // add rcx, rax
+                // pop rax
+                // cmp r2, rcx
+
+                0x48, 0xB9, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         //mov rcx, imgBase (0x30)
                 0x48, 0x29, 0xCF,                                                   //sub r2, rcx - 0x38
-                0x48, 0xB9, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         //mov rcx, wowCopyBase (0x3D)
+                0x48, 0xB9, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         //mov rcx, imgCopyBase (0x3D)
                 0x48, 0x01, 0xCF,                                                   //add r2, rcx - 0x45
                 0x59,                                                               //pop rcx
                 //crc:                                                              //crc location start

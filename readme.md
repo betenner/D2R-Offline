@@ -17,7 +17,7 @@ Clone the project
 Build using Visual Studio
 
 Move to output
-``cd bin/Debug/dotnetcore3.1/``
+``cd bin/Debug/netcoreapp3.1/``
 
 Finally, launch the executable using `path` to `game.exe` as argument
 ``./D2ROffline.exe C:/D2R/Game.exe``

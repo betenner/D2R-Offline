@@ -40,7 +40,7 @@ namespace D2ROffline
             var d2r = Process.Start(pInfo);
 
             ConsolePrint("Process started...");
-            //Thread.Sleep(1100); // wait for things to unpack.. TODO: use different approach
+            Thread.Sleep(1100); // wait for things to unpack.. TODO: use different approach
 
             //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
 

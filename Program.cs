@@ -11,7 +11,7 @@ namespace D2ROffline
     {
         static void Main(string[] args)
         {
-            string version = "v2.0.1";
+            string version = "v2.0.0-beta";
 
             if (args.Length < 1)
             {
@@ -500,6 +500,197 @@ namespace D2ROffline
                 else
                     crcCave[crcCaveRegInstructOffsets[i] + 2] += 8; //inc to fix basic registers
             }
+
+            //add nops to end of the detour buffer
+            byte[] crcDetourFixed = new byte[origCrcInstructionLength];
+            for (int i = 0; i < origCrcInstructionLength; i++)
+            {
+                if (i < crcDetour.Length)
+                {
+                    //Copy byte from crcDetour to fixed crcDetour
+                    crcDetourFixed[i] = crcDetour[i];
+                }
+                else
+                {
+                    //add NOPs
+                    crcDetourFixed[i] = 0x90;
+                }
+            }
+
+            if (!WriteProcessMemory(processHandle, (IntPtr)(crcLocation), crcDetourFixed, crcDetourFixed.Length, out IntPtr bWrite))
+            {
+                ConsolePrint("Writing CRC detour failed", ConsoleColor.Red);
+                return false;
+            }
+            if (!WriteProcessMemory(processHandle, CaveAddr, crcCave, crcCave.Length, out bWrite))
+            {
+                ConsolePrint("Writing CRC CodeCave failed", ConsoleColor.Red);
+                return false;
+            }
+
+            ConsolePrint($"Bypassed CRC at {crcLocation.ToString("X")}"); // to {CaveAddr.ToString("X")}");
+            return true;
+        }
+
+
+        public static bool detourCRC_Experimental(IntPtr processHandle, long crcLocation, long wowBase, long wowCopyBase)
+        {
+            #region asmCave
+
+            //stuff that goes in the .text section
+            byte[] crcDetour =
+            {
+                0x50,                                                               //push rax
+                0x48, 0xB8, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         //mov rax, CaveAddr (0x03)
+                0xFF, 0xD0,                                                         //call rax
+                0x58,                                                               //pop rax
+                0x90                                                                //nop
+            };
+            byte[] crcDetourRegOffsets = { 0x00, 0x02, 0x0C, 0x0D }; //regiser offsets (may need to change when register is used in code)
+
+            //stuff that goes in new allocated section
+            byte[] crcCave =
+            {
+                0x51,                                                               // push rcx
+                //if_text:
+                0x48, 0xB9, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         // mov rcx, imgBase (0x03)
+                0x48, 0x39, 0xCF,                                                   // cmp r2, rcx - 0x0B
+                0x7C, 0x1E,                                                         // jl if_rdata
+                0x50,                                                               // push rax
+                0x48, 0x8B, 0xC1,                                                   // mov rax, rcx
+                0x8B, 0x89, 0x58, 0x02, 0x00, 0x00,                                 // mov ecx, [r1+0x258] // .text Raw Size
+                0x90,
+                0x48, 0x01, 0xC1,                                                   // add rcx,rax
+                0x8B, 0x80, 0x54, 0x02, 0x00, 0x00,                                 // mov eax,[rax+0x254] // .text Virtual Address
+                0x90,
+                0x48, 0x01, 0xC1,                                                   // add rcx,rax
+                0x58,                                                               // pop rax
+                0x48, 0x39, 0xCF,                                                   // cmp r2, rcx - 0x29
+                0x76, 0x2B,                                                         // jbe swap_crc
+                
+                // TODO: update codecave with assembly below (and offset crcCaveRegInstructOffsets offsets)
+
+                //if_rdata:
+                0x48, 0xB9, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         // mov rcx, imgBase (0x30)
+                0x48, 0x39, 0xCF,                                                   // cmp r2, rcx - 0x3A
+                0x50,                                                               // push rax
+                0x48, 0x8B, 0xC1,                                                   // mov eax, rcx
+                0x8B, 0x89, 0x80, 0x02, 0x00, 0x00,                                 // mov ecx, [r1+0x280]  // .rdata Raw Size
+                0x90,                                                               // nop
+                0x48, 0x01, 0xC1,                                                   // add rcx, rax
+                0x8B, 0x80, 0x7C, 0x02, 0x00, 0x00,                                 // mov eax, [rax+0x27C] // .rdata Virtual Address
+                0x90,                                                               // nop
+                0x48, 0x01, 0xC1,                                                   // add rcx, rax
+                0x58,                                                               // pop rax
+                0x48, 0x39, 0xC8,                                                   // cmp r2, rcx - 0x 
+                0x7F, 0x1A,                                                         // jg normal_crc 
+                //swap_crc:
+                0x48, 0xB9, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         // mov rcx, imgBase (0x5B)
+                0x48, 0x29, 0xCF,                                                   // sub r2, rcx - 0x65
+                0x48, 0xB9, 0xEF, 0xEE, 0xEE, 0xEE, 0xEE, 0xBE, 0xAD, 0xDE,         // mov rcx, imgCopyBase (0x68)
+                0x48, 0x01, 0xCF,                                                   // add r2, rcx - 0x45
+                0x59,                                                               // pop rcx
+                //normal_crc:                                                       // crc location start
+                0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,                           //+ 0x76 
+                0x90, 0x90, 0x90,
+                0x90, 0x90, 0x90, 0x90, 0x90,                                       // NOP's as placeholder for the 15-19 bytes
+                0x90, 0x90, 0x90,                                                   
+                //crc                                                               // crc location end
+                0xC3                                                                // ret
+            };
+            byte[] crcCaveRegInstructOffsets = { 0x0B, 0x29, 0x3A, 0x65, 0x72 }; //register offsets (may need to change when register is used in code)
+            #endregion asmCave
+
+            IntPtr CaveAddr = VirtualAllocEx(processHandle, IntPtr.Zero, crcCave.Length, MemoryAllocationType.MEM_COMMIT, MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE);
+            if (CaveAddr == IntPtr.Zero)
+            {
+                ConsolePrint("VirtualAlloxEx error", ConsoleColor.Red);
+                return false;
+            }
+
+            byte[] splitCaveAddr = BitConverter.GetBytes(CaveAddr.ToInt64());                       //write CaveAddr to crcDetour buffer
+            byte[] splitImgBase = BitConverter.GetBytes(wowBase);                                   //write imgBase to crcCave buffer
+            byte[] splitImgCopyBase = BitConverter.GetBytes(wowCopyBase);                           //write imgCopyBase to crcCave buffer
+
+            // replace the beef(placeholders)
+            for (int i = 0; i < 8; i++)
+            {
+                crcDetour[0x03 + i] = splitCaveAddr[i];         //CaveAdr
+                crcCave[0x03 + i] = splitImgBase[i];            //imgBase
+                crcCave[0x30 + i] = splitImgBase[i];            //imgBase
+                crcCave[0x5B + i] = splitImgBase[i];            //imgBase
+                crcCave[0x68 + i] = splitImgCopyBase[i];        //imgCopyBase (aka Game_2.exe)
+            }
+
+            //obtain crc instructions
+            byte[] crcBuffer = new byte[88];
+            if (!ReadProcessMemory(processHandle, (IntPtr)crcLocation, crcBuffer, crcBuffer.Length, out IntPtr bRead))
+            {
+                ConsolePrint("Reading CRC location failed", ConsoleColor.Red);
+                return false;
+            }
+
+            bool isJmpFound = false;
+            int origCrcInstructionLength = -1;
+            for (int i = 0; i < crcCave.Length - (0x76+2); i++)
+            {
+                //jb is the last instruction and starts with 0x72 (2 bytes long)
+                crcCave[0x78 + i] = crcBuffer[i];                   //write byte to codecave
+                if (crcBuffer[i] == 0x72)
+                {
+                    crcCave[0x78 + i + 1] = crcBuffer[i + 1];       //include last byte of JB instruction before breaking
+                    origCrcInstructionLength = i + 2;               //Keep track of bytes used to NOP later
+                    isJmpFound = true;
+                    break;
+                }
+            }
+
+            if (!isJmpFound)
+            {
+                ConsolePrint("NOPE", ConsoleColor.Red);
+                return false;
+            }
+
+            //list used registers rax,   rcx,   rdx,   rbx,   rsp,   rbp,   rsi,   rdi
+            bool[] usedRegs = { false, false, false, false, false, false, false, false };     //rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi
+
+
+            //check byte code to find used stuff
+            usedRegs[(crcBuffer[0x05] - 0x04) / 8] = true;              //x,[reg+reg*8]
+            usedRegs[(crcBuffer[0x09] - 0xC0)] = true;                //inc x
+
+            if (crcBuffer[0x0C] >= 0xC0 && crcBuffer[0x0C] < 0xC8)
+                usedRegs[(crcBuffer[0x0C] - 0xC0)] = true;            // cmp ?, x
+
+            byte selectReg = 0;
+            for (byte r = 0; r < usedRegs.Length; r++)
+            {
+                if (usedRegs[r] == false)
+                {
+                    selectReg = r;
+                    break;
+                }
+            }
+
+            //change Detour register to non-used register
+            for (int i = 0; i < crcDetourRegOffsets.Length; i++)
+            {
+                crcDetour[crcDetourRegOffsets[i]] += selectReg;      //increase byte to set selected register
+            }
+
+            ////Change the register(r2) used to calc crc32
+            //for (int i = 0; i < crcCaveRegInstructOffsets.Length; i++)
+            //{
+            //    crcCave[crcCaveRegInstructOffsets[i] + 0] = crcBuffer[0x01]; //copy
+            //    crcCave[crcCaveRegInstructOffsets[i] + 2] = crcBuffer[0x06]; //copy
+            //    if (crcCave[crcCaveRegInstructOffsets[i] + 0] != 0x48) //check if register is extra register (r8 - r15)
+            //    {
+            //        crcCave[crcCaveRegInstructOffsets[i] + 0] = 0x49; //set to extra register type
+            //        crcCave[crcCaveRegInstructOffsets[i] + 2] = (byte)(0xC8 + (crcBuffer[0x06] - 0xC0) % 8); //set second reg to rcx and fix first reg
+            //    }
+            //    else
+            //        crcCave[crcCaveRegInstructOffsets[i] + 2] += 8; //inc to fix basic registers
+            //}
 
             //add nops to end of the detour buffer
             byte[] crcDetourFixed = new byte[origCrcInstructionLength];

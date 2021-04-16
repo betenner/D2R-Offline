@@ -4,7 +4,7 @@ A simple tool that remaps & bypasses *Diablo II Resurrected* module and then con
 
 More information about the crc32 bypassing and remapping can be found in my '[Bypassing World of Warcraft's Read-Only Code Protection (crc32)](https://ferib.dev/blog.php?l=post/Bypassing_World_of_Warcraft_Crc32_Integrity_Checks)' blog post
 
-![diablo 2 resurrected screenshot](https://github.com/ferib/D2R-Offline/blob/master/img/weird_flex.png?raw=true)
+![diablo 2 resurrected screenshot](https://github.com/ferib/D2R-Offline/blob/master/img/weird__flex.png?raw=true)
 
 # Usage
 

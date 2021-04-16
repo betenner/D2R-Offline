@@ -11,7 +11,7 @@ namespace D2ROffline
     {
         static void Main(string[] args)
         {
-            string version = "v2.0.1-beta";
+            string version = "v2.0.2-beta";
             string d2rPath = "Game.exe";
 
             // overwrite path if args are set

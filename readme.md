@@ -4,7 +4,7 @@ A simple tool that remaps & bypasses *Diablo II Resurrected* module and then con
 
 More information about the crc32 bypassing and remapping can be found in my '[Bypassing World of Warcraft's Read-Only Code Protection (crc32)](https://ferib.dev/blog.php?l=post/Bypassing_World_of_Warcraft_Crc32_Integrity_Checks)' blog post
 
-![diablo 2 resurrected screenshot](https://github.com/ferib/D2R-Offline/blob/master/img/weird__group_flex.png?raw=true)
+![diablo 2 resurrected screenshot](https://github.com/ferib/D2R-Offline/blob/master/img/weird_group_flex.jpg?raw=true)
 
 # Usage
 
@@ -40,7 +40,11 @@ Offline/Local patch, thanks to [king48488](https://www.ownedcore.com/forums/diab
 0x597E1C:90909090909090
 ```
 
-Multiplayer access, thanks to [shalzuth]()
+All classes & Multiplayer access, thanks to [shalzuth]()
+```
+0xD615F2:909090909090909090909090909090909090909090909090909090: ~ show all calsses on load (shalzuth)
+0x39FC03:9090909090909090909090909090909090909090: ~ allow chars to load (shalzuth)
+```
 
 Some more
 Thanks to [ejt](https://www.ownedcore.com/forums/diablo-2-resurrected/diablo-2-resurrected-bots-programs/940906-0-1-62115-offsets.html) & [Crazyloon](https://www.ownedcore.com/forums/diablo-2-resurrected/diablo-2-resurrected-bots-programs/940906-0-1-62115-offsets.html).
@@ -56,7 +60,6 @@ Thanks to [ejt](https://www.ownedcore.com/forums/diablo-2-resurrected/diablo-2-r
 ```
 
 Language patches to force the client into loading a language, thanks to Ferib (me).
-- 
 ```
 0x1446C8:+0x00: ~ English *[enUS]*
 0x1446C8:+0x270A4: ~ German *[deDE]*

@@ -278,23 +278,33 @@ namespace D2ROffline
                 //}
 
                 // NOTE: temp fix, using shalzuth solution
-                byte[] buff = new byte[4];
-                if (!ReadProcessMemory(processHandle, baseAddress + 0x23C9EB8, buff, buff.Length, out _)) // entrypoint
+                //byte[] buff = new byte[4];
+                //if (!ReadProcessMemory(processHandle, baseAddress + 0x23C9EB8, buff, buff.Length, out _)) // entrypoint
+                //{
+                //    ConsolePrint("Failed reading initial process memory", ConsoleColor.Red);
+                //    return;
+                //}
+                //bool isReady = true;
+                //foreach (var b in buff)
+                //{
+                //    if (b == 0x00)
+                //    {
+                //        isReady = false;
+                //        break;
+                //    }
+                //}
+                //if (isReady)
+                //    break;
+
+                byte[] buff = new byte[1];
+                if (!ReadProcessMemory(processHandle, baseAddress + 0x22E2560, buff, buff.Length, out _)) // initFlag
                 {
-                    ConsolePrint("Failed writing initial process memory", ConsoleColor.Red);
+                    ConsolePrint("Failed reading initial process memory", ConsoleColor.Red);
                     return;
                 }
-                bool isReady = true;
-                foreach (var b in buff)
-                {
-                    if (b == 0x00)
-                    {
-                        isReady = false;
-                        break;
-                    }
-                }
-                if (isReady)
+                if (buff[0] != 0x00)
                     break;
+                
 
                 NtResumeProcess(processHandle);
                 Thread.Sleep(50); // continue execution

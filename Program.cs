@@ -11,15 +11,12 @@ namespace D2ROffline
     {
         static void Main(string[] args)
         {
-            string version = "v2.0.0-beta";
+            string version = "v2.0.1-beta";
+            string d2rPath = "Game.exe";
 
-            if (args.Length < 1)
-            {
-                ConsolePrint("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE", ConsoleColor.White);
-                return;
-            }
-
-            string d2rPath = args[0];
+            // overwrite path if args are set
+            if (args.Length > 0)
+                d2rPath = args[0];
 
             if (!File.Exists(d2rPath))
             {
@@ -75,6 +72,8 @@ namespace D2ROffline
             NtResumeProcess(hProcess);
             CloseHandle(hProcess);
             ConsolePrint("Done!", ConsoleColor.Green);
+            ConsolePrint("Press any key to exit...", ConsoleColor.Gray);
+            Console.ReadKey();
         }
 
         private static void PrintASCIIArt()
@@ -210,9 +209,11 @@ namespace D2ROffline
             ApplyAllPatches(processHandle, baseAddress);
 
             // NOTE: uncomment if you want to snitch a hook inside the .text before it remaps back from RWX to RX
-            //ConsolePrint("Patching complete..");
-            //ConsolePrint("[!] Press any key to remap and resume proces...", ConsoleColor.Yellow);
-            //Console.ReadKey();
+#if DEBUG
+            ConsolePrint("Patching complete..");
+            ConsolePrint("[!] Press any key to remap and resume proces...", ConsoleColor.Yellow);
+            Console.ReadKey();
+#endif
 
             // remap
             status = NtUnmapViewOfSection(processHandle, baseAddress);
@@ -243,15 +244,6 @@ namespace D2ROffline
 
         private static void ResumeToEntrypoint(IntPtr processHandle, IntPtr baseAddress, uint threadId)
         {
-            // patch inf loop at entry point
-            //byte[] origByes = new byte[2];
-            //IntPtr targetLocation = IntPtr.Add(baseAddress, 0x145A70);
-            //if (!ReadProcessMemory(processHandle, targetLocation, origByes, origByes.Length, out _) || !WriteProcessMemory(processHandle, targetLocation, new byte[] { 0xEB, 0xFE }, 2, out _)) // entrypoint
-            //{
-            //    ConsolePrint("Failed writing initial process memory", ConsoleColor.Red);
-            //    return;
-            //}
-
             IntPtr tHandle = OpenThread(ThreadAccess.GET_CONTEXT, false, threadId);
 
             // now waiting for game  to lock in inf loop
@@ -276,25 +268,6 @@ namespace D2ROffline
                 //    SetThreadContext(tHandle, ref tContext);
                 //    break;
                 //}
-
-                // NOTE: temp fix, using shalzuth solution
-                //byte[] buff = new byte[4];
-                //if (!ReadProcessMemory(processHandle, baseAddress + 0x23C9EB8, buff, buff.Length, out _)) // entrypoint
-                //{
-                //    ConsolePrint("Failed reading initial process memory", ConsoleColor.Red);
-                //    return;
-                //}
-                //bool isReady = true;
-                //foreach (var b in buff)
-                //{
-                //    if (b == 0x00)
-                //    {
-                //        isReady = false;
-                //        break;
-                //    }
-                //}
-                //if (isReady)
-                //    break;
 
                 byte[] buff = new byte[1];
                 if (!ReadProcessMemory(processHandle, baseAddress + 0x22E2560, buff, buff.Length, out _)) // initFlag
@@ -371,7 +344,7 @@ namespace D2ROffline
                 if (addr[i] == 0)
                     continue;
 
-                ConsolePrint($"Patching base+{addr[i].ToString("X4")}");
+                ConsolePrint($"Patching 0x{(baseAddress+addr[i]).ToString("X8")}");
                 if (!WriteProcessMemory(processHandle, IntPtr.Add(baseAddress, addr[i]), patch[i], patch[i].Length, out IntPtr bWritten1) || (int)bWritten1 != patch[i].Length)
                     ConsolePrint($"Patch {i} failed!!", ConsoleColor.Red);
             }

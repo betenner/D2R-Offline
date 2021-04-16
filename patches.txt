@@ -8,5 +8,7 @@
 0x14731F:909090909090: ~ mod_1
 0x14732C:9090: ~ mod_2
 0x148BE5:909090909090: ~ confC_1
-0x1446C8:+0x270D4: ~ Russian
-0xCA8013:+0x270D4: ~ Russian
+
+0x683ED3:EB39: ~ enable Crash.txt
+
+0x1446C8:+0x270FF: ~ crash test

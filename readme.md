@@ -22,6 +22,9 @@ Move to output
 Finally, launch the executable using `path` to `game.exe` as argument
 ``./D2ROffline.exe C:/D2R/Game.exe``
 
+You can also use the `-txt` parameter to use `.txt`/`.bin` files.
+``./D2ROffline.exe C:/D2R/Game.exe -txt``
+
 ## Custom Patches
 
 There is a neat little feature that allows you to use the `patches.txt` file and create your own patching rules, the `patches.txt` file **MUST** be in the same folder as the executable!

@@ -36,6 +36,12 @@ namespace D2ROffline
             ConsolePrint("Launching game...");
 
             var pInfo = new ProcessStartInfo(d2rPath);
+
+            if (args.Length != 1)
+                pInfo.Arguments = args[1];
+            else 
+                ConsolePrint("Extra parameters not found. Proceeding...", ConsoleColor.DarkYellow);
+
             var d2r = Process.Start(pInfo);
 
             // wait for proc to properly enter userland to bypass first few anti-cheating checks

@@ -14,6 +14,12 @@ namespace D2ROffline
             string version = "v2.0.4-beta";
             string d2rPath = "Game.exe";
 
+            // NOTE: if you are going to copy & modify this then please atleast write my name correct!
+            PrintASCIIArt(); // 'colored' logo
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"			                                       _____  _______ _______ _______ _     _ _______  ______ \n {version.PadRight(16)}			                      |_____] |_____|    |    |       |_____| |______ |_____/ \n______________________________________________________________|       |     |    |    |_____  |     | |______ |    \\_ \n");
+            Console.ForegroundColor = ConsoleColor.Gray;
+
             // overwrite path if args are set
             if (args.Length > 0)
                 d2rPath = args[0];
@@ -27,12 +33,6 @@ namespace D2ROffline
                 return;
             }
 
-            // NOTE: if you are going to copy & modify this then please atleast write my name correct!
-            PrintASCIIArt(); // 'colored' logo
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"			                                       _____  _______ _______ _______ _     _ _______  ______ \n {version.PadRight(16)}			                      |_____] |_____|    |    |       |_____| |______ |_____/ \n______________________________________________________________|       |     |    |    |_____  |     | |______ |    \\_ \n");
-            Console.ForegroundColor = ConsoleColor.Gray;
-
             ConsolePrint("Launching game...");
 
             var pInfo = new ProcessStartInfo(d2rPath);
@@ -40,15 +40,18 @@ namespace D2ROffline
 
             // wait for proc to properly enter userland to bypass first few anti-cheating checks
             ConsolePrint("Process started...");
-            
-            // NOTE: if your game crashes, try to increase/decrease this value
-            while(d2r.UserProcessorTime.TotalMilliseconds < 230) // 100~500 should do the trick! (to less is crash, to much is no valid patch)
-                Thread.Sleep(1);
+
+            //// NOTE: if your game crashes, try to increase/decrease this value
+            //while (d2r.UserProcessorTime.TotalMilliseconds < 230) // 100~500 should do the trick! (to less is crash, to much is no valid patch)
+            //    Thread.Sleep(1);
 
             //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
             IntPtr hProcess = OpenProcess(ProcessAccessFlags.PROCESS_ALL_ACCESS, false, d2r.Id);
             ConsolePrint("Opening process...");
-           
+            
+            // pre setup
+            WaitForData(hProcess, d2r.MainModule.BaseAddress, 0x22D8858);
+
             if (hProcess == IntPtr.Zero)
             {
                 ConsolePrint("Failed on OpenProcess. Handle is invalid.", ConsoleColor.Red);
@@ -258,7 +261,7 @@ namespace D2ROffline
                 if (!ReadProcessMemory(processHandle, baseAddress + offset, buff, buff.Length, out _)) // pre
                 {
                     ConsolePrint("Failed reading initial process memory", ConsoleColor.Red);
-                    return;
+                    continue; // dont break?
                 }
                 if (buff[0] != 0x00 || buff[2] != 0x00)
                     break;

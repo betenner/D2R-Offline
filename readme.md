@@ -8,7 +8,7 @@ More information about the crc32 bypassing and remapping can be found in my '[By
 
 # Usage
 
-Dotnet core 3.1 is required, which you can download at https://dotnet.microsoft.com/download/dotnet/3.1
+.NET Framework v4.7.2 is required, which you can download at https://dotnet.microsoft.com/download/dotnet-framework/thank-you/net472-web-installer
 
 
 Clone the project
@@ -24,15 +24,16 @@ Finally, launch the executable using `path` to `game.exe` as argument
 
 ## Custom Patches
 
-There is a neat little feature that allows you to create a `patches.txt` file that you can place inside the folder, next to the .exe.
-This allows you to create your own patches, here is an example:
+There is a neat little feature that allows you to use the `patches.txt` file and create your own patching rules, the `patches.txt` file **MUST** be in the same folder as the executable!
+This allows you to create your own patches, for example:
 ```
 0xD4AD68:9090
 0xD4E25F:909090909090
 0xCAFB9D:90B001
 0x597E1C:90909090909090
 ```
-These are already hardcoded inside the tool, but will be overruled once the `patches.txt` file is found.
+~~These are already hardcoded inside the tool, but will be overruled once the `patches.txt` file is found.~~
+These are no longer hardcoded inside the tool to prevent conflicts or unwanted behavior in game future updates.
 
 ## Download Game Files
 

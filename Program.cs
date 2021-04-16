@@ -308,9 +308,7 @@ namespace D2ROffline
         private static void ApplyAllPatches(IntPtr processHandle, IntPtr baseAddress)
         {
             // NOTE: you can make a 'patches.txt' file, using the format '0x1234:9090' where 0x1234 indicates the offset (game.exe+0x1234) and 9090 indicates the patch value (nop nop)
-            // Local Patch Offset Credits: king48488 @ Ownedcore.com
-            // NOTE: remove defaults as they will become outdated when game updates and may causes crashes or unwanted behavior when no custom patches.txt is provided?
-            string patchesContent = "0xD4AD68:9090\n0xD4E25F:909090909090\n0xCAFB9D:90B001\n0x597E1C:90909090909090"; // nop slide `lea eax, [betaEnabled]
+            string patchesContent = "";
             if (File.Exists("patches.txt"))
                 patchesContent = File.ReadAllText("patches.txt");
 
@@ -330,6 +328,7 @@ namespace D2ROffline
                 string[] data = split[i].Split(':');
                 if (data.Length < 2)
                     continue; // probs empty line
+
                 addr[i] = Convert.ToInt32(data[0], 0x10);
                 patch[i] = new byte[data[1].Length / 2];
                 for (int j = 0; j < patch[i].Length; j++)

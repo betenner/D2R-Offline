@@ -38,69 +38,69 @@ These are no longer hardcoded inside the tool to prevent conflicts or unwanted b
 ## Language Support
 To change the language of the game, place one of the preferred patches inside your `patches.txt` file.
 
-- English
+- English *[enUS]*
 ```
-// Set by default
-```
-
-- German
-```
-0x1446C8:+0x270A4: ~ German
+0x1446C8:+0x00: ~ enUS
 ```
 
-- Spanish
+- German *[deDE]*
 ```
-0x1446C8:+0x270AC: ~ Spanish
-```
-
-- French
-```
-0x1446C8:+0x270B4: ~ French
+0x1446C8:+0x270A4: ~ deDE
 ```
 
-- Italian
+- Spanish *[esES]*
 ```
-0x1446C8:+0x270BC: ~ Italian
-```
-
-- Korean
-```
-0x1446C8:+0x270C4: ~ Korean
+0x1446C8:+0x270AC: ~ esES
 ```
 
-- Polska
+- French *[frFR]*
 ```
-0x1446C8:+0x270CC: ~ Polski
-```
-
-- Russian
-```
-0x1446C8:+0x270D4: ~ Russian
+0x1446C8:+0x270B4: ~ frFR
 ```
 
-- Chinease
+- Italian *[itIT]*
 ```
-0x1446C8:+0x270DC: ~ Chinease
-```
-
-- Taiwan
-```
-0x1446C8:+0x270E4: ~ Taiwan
+0x1446C8:+0x270BC: ~ itIT
 ```
 
-- Sweden 
+- Korean *[koKR]*
 ```
-0x1446C8:+0x270EC: ~ Sweden
-```
-
-- Japan
-```
-0x1446C8:+0x270F4: ~ Japan
+0x1446C8:+0x270C4: ~ koKR
 ```
 
-- Brazilian
+- Polski *[plPL]*
 ```
-0x1446C8:+0x270FC: ~ Brazilian
+0x1446C8:+0x270CC: ~ plPL
+```
+
+- Russian *[ruRU]*
+```
+0x1446C8:+0x270D4: ~ ruRU
+```
+
+- Chinese (simplified) *[zhCN]*
+```
+0x1446C8:+0x270DC: ~ zhCN
+```
+
+- Taiwan *[zhTW]*
+```
+0x1446C8:+0x270E4: ~ zhTW
+```
+
+- Spanish *[esMX]*
+```
+0x1446C8:+0x270EC: ~ esMX
+```
+
+- Japanese *[jaJP]*
+```
+0x1446C8:+0x270F4: ~ jaJP
+```
+
+- Brazilian *[ptBR]*
+```
+0x1446C8:+0x270FC: ~ ptBR
 ```
 
 NOTE: English is set by default, there is no need to set any of the above patches so make sure to remove the language patches when you want back to English!

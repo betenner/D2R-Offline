@@ -36,7 +36,7 @@ This allows you to create your own patches, for example:
 These are no longer hardcoded inside the tool to prevent conflicts or unwanted behavior in game future updates.
 
 ## Language Support
-To change the language of the game, place one of the prefered patches inside your `patches.txt` file.
+To change the language of the game, place one of the preferred patches inside your `patches.txt` file.
 
 - German
 ```

@@ -330,9 +330,29 @@ namespace D2ROffline
                     continue; // probs empty line
 
                 addr[i] = Convert.ToInt32(data[0], 0x10);
-                patch[i] = new byte[data[1].Length / 2];
-                for (int j = 0; j < patch[i].Length; j++)
-                    patch[i][j] = Convert.ToByte(data[1].Substring(j * 2, 2), 0x10);
+                if (addr[i] == 0)
+                    continue;
+
+                if (data[1][0] == '+')
+                {
+                    // offset patch
+                    string offset = data[1].Substring(1);
+                    //byte[] buf = new byte[offset.Length / 2]; // amount of bytes in patch len?
+                    byte[] buf = new byte[8]; // qword
+                    if(!ReadProcessMemory(processHandle, IntPtr.Add(baseAddress, addr[i]), buf, buf.Length, out _))
+                    {
+                        ConsolePrint("Error, failed read patch location!", ConsoleColor.Yellow);
+                        continue; // non critical, just skip
+                    }
+                    patch[i] = BitConverter.GetBytes(BitConverter.ToInt64(buf, 0) + Convert.ToInt64(offset, 0x10));
+                }
+                else
+                { 
+                    // normal patch
+                    patch[i] = new byte[data[1].Length / 2];
+                    for (int j = 0; j < patch[i].Length; j++)
+                        patch[i][j] = Convert.ToByte(data[1].Substring(j * 2, 2), 0x10);
+                }
             }
 
             // patch arrays
@@ -531,7 +551,6 @@ namespace D2ROffline
             ConsolePrint($"Bypassed CRC at {crcLocation.ToString("X")}"); // to {CaveAddr.ToString("X")}");
             return true;
         }
-
 
         public static bool detourCRC_Experimental(IntPtr processHandle, long crcLocation, long wowBase, long wowCopyBase)
         {

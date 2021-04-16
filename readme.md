@@ -35,6 +35,66 @@ This allows you to create your own patches, for example:
 ~~These are already hardcoded inside the tool, but will be overruled once the `patches.txt` file is found.~~
 These are no longer hardcoded inside the tool to prevent conflicts or unwanted behavior in game future updates.
 
+## Language Support
+To change the language of the game, place one of the prefered patches inside your `patches.txt` file.
+
+- German
+```
+0x1446C8:3CDA8F01: ~ German
+```
+
+- French
+```
+0x1446C8:4CDA8F01: ~ French
+```
+
+- Italian
+```
+0x1446C8:54DA8F01: ~ Italian
+```
+
+- Korean
+```
+0x1446C8:5CDA8F01: ~ Korean
+```
+
+- Polska
+```
+0x1446C8:64DA8F01: ~ Polski
+```
+
+- Russian
+```
+0x1446C8:6CDA8F01: ~ Russian
+```
+
+- Chinease
+```
+0x1446C8:74DA8F01: ~ Chinease
+```
+
+- Taiwan
+```
+0x1446C8:7CDA8F01: ~ Taiwan
+```
+
+- Sweden 
+```
+0x1446C8:84DA8F01: ~ Sweden
+```
+
+- Japan
+```
+0x1446C8:8CDA8F01: ~ Japan
+```
+
+- Brazilian
+```
+0x1446C8:95DA8F01: ~ Brazilian
+```
+
+NOTE: English is set by default, there is no need to set any of the above patches so make sure to remove the language patches when you want back to English!
+
 ## Download Game Files
 
 Download this project: https://github.com/barncastle/Battle.Net-Installer/releases/tag/v1.3

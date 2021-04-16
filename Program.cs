@@ -22,6 +22,8 @@ namespace D2ROffline
             {
                 ConsolePrint($"Error, {d2rPath} does not exist!", ConsoleColor.Red);
                 ConsolePrint("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE", ConsoleColor.White);
+                ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
+                Console.ReadKey();
                 return;
             }
 
@@ -47,6 +49,8 @@ namespace D2ROffline
             if (hProcess == IntPtr.Zero)
             {
                 ConsolePrint("Failed on OpenProcess. Handle is invalid.", ConsoleColor.Red);
+                ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
+                Console.ReadKey();
                 return;
             }
 
@@ -56,6 +60,8 @@ namespace D2ROffline
             if (VirtualQueryEx(hProcess, d2r.MainModule.BaseAddress, out MEMORY_BASIC_INFORMATION basicInformation, Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) == 0)
             {
                 ConsolePrint("Failed on VirtualQueryEx. Return is 0 bytes.", ConsoleColor.Red);
+                ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
+                Console.ReadKey();
                 return;
             }
             IntPtr regionBase = basicInformation.baseAddress;
@@ -72,7 +78,7 @@ namespace D2ROffline
             NtResumeProcess(hProcess);
             CloseHandle(hProcess);
             ConsolePrint("Done!", ConsoleColor.Green);
-            ConsolePrint("Press any key to exit...", ConsoleColor.Gray);
+            ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
             Console.ReadKey();
         }
 

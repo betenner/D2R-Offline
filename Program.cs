@@ -11,7 +11,7 @@ namespace D2ROffline
     {
         static void Main(string[] args)
         {
-            string version = "v0.1.62115.0";
+            string version = "v2.0.1";
 
             if (args.Length < 1)
             {
@@ -69,6 +69,7 @@ namespace D2ROffline
 
             ConsolePrint("Process suspended");
             ConsolePrint("Remapping process..");
+            //IntPtr addr = RemapMemoryRegion(hProcess, regionBase, regionSize.ToInt32(), MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE, (uint)d2r.Threads[0].Id);
             IntPtr addr = RemapMemoryRegion(hProcess, regionBase, regionSize.ToInt32(), MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE);
             ConsolePrint("Resuming process..");
             NtResumeProcess(hProcess);
@@ -129,6 +130,7 @@ namespace D2ROffline
             Console.ForegroundColor = old;
         }
 
+        //public static IntPtr RemapMemoryRegion(IntPtr processHandle, IntPtr baseAddress, int regionSize, MemoryProtectionConstraints mapProtection, uint mainThreadId)
         public static IntPtr RemapMemoryRegion(IntPtr processHandle, IntPtr baseAddress, int regionSize, MemoryProtectionConstraints mapProtection)
         {
             IntPtr addr = VirtualAllocEx(processHandle, IntPtr.Zero, regionSize, MemoryAllocationType.MEM_COMMIT | MemoryAllocationType.MEM_RESERVE, mapProtection);
@@ -182,6 +184,9 @@ namespace D2ROffline
                 return IntPtr.Zero;
 
             MemoryProtectionConstraints old = MemoryProtectionConstraints.PAGE_NOACCESS;
+
+            // continue until process has been inited
+            //ResumeToEntrypoint(processHandle, baseAddress, mainThreadId);
 
             //crc32 bypass
             //search for F2 ?? 0F 38 F1 - F2 REX.W 0F 38 F1 /r CRC32 r64, r/m64	RM	Valid	N.E.	Accumulate CRC32 on r/m64.
@@ -240,7 +245,8 @@ namespace D2ROffline
         {
             // patch inf loop at entry point
             //byte[] origByes = new byte[2];
-            //if (!ReadProcessMemory(processHandle, baseAddress + 0x1000, origByes, origByes.Length, out _) || !WriteProcessMemory(processHandle, baseAddress + 0x1000, new byte[] { 0xEB, 0xFE }, 2, out _)) // entrypoint
+            //IntPtr targetLocation = IntPtr.Add(baseAddress, 0x145A70);
+            //if (!ReadProcessMemory(processHandle, targetLocation, origByes, origByes.Length, out _) || !WriteProcessMemory(processHandle, targetLocation, new byte[] { 0xEB, 0xFE }, 2, out _)) // entrypoint
             //{
             //    ConsolePrint("Failed writing initial process memory", ConsoleColor.Red);
             //    return;
@@ -253,13 +259,13 @@ namespace D2ROffline
             int count = 0;
             while (count < 100) // 5000ms timeout
             {
-                // NOTE: i tried the below thing to wait for entry point but there is some detection blocking it
+                //// NOTE: i tried the below thing to wait for entry point but there is some detection blocking it
                 //CONTEXT64 tContext = new CONTEXT64();
                 //tContext.ContextFlags = CONTEXT_FLAGS.CONTEXT_FULL;
                 //GetThreadContext(tHandle, ref tContext);
                 //ConsolePrint(tContext.Rip.ToString("X16"), ConsoleColor.Cyan);
 
-                //if (tContext.Rip == (ulong)baseAddress + 0x1000 || tContext.Rip == (ulong)baseAddress + 0x1001) // .text section dimension
+                //if (tContext.Rip == (ulong)targetLocation || tContext.Rip == (ulong)targetLocation + 1) // .text section dimension
                 //{
                 //    if (!WriteProcessMemory(processHandle, baseAddress + 0x1000, origByes, origByes.Length, out _)) // restore entrypoint
                 //    {
@@ -308,7 +314,7 @@ namespace D2ROffline
             if (File.Exists("patches.txt"))
                 patchesContent = File.ReadAllText("patches.txt");
 
-            if(patchesContent == "")
+            if (patchesContent == "")
             {
                 ConsolePrint("WARNING: Not patches are beeing loaded. (If this is unexpected, double check your 'patches.txt' file!)", ConsoleColor.Yellow);
                 return;

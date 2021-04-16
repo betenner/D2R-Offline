@@ -11,7 +11,7 @@ namespace D2ROffline
     {
         static void Main(string[] args)
         {
-            string version = "v2.0.3-beta";
+            string version = "v2.0.4-beta";
             string d2rPath = "Game.exe";
 
             // overwrite path if args are set
@@ -38,20 +38,17 @@ namespace D2ROffline
             var pInfo = new ProcessStartInfo(d2rPath);
             var d2r = Process.Start(pInfo);
 
+            // wait for proc to properly enter userland to bypass first few anti-cheating checks
             ConsolePrint("Process started...");
-            var wHandle = d2r.MainWindowHandle;
-            while (wHandle == IntPtr.Zero)
-            {
-                Thread.Sleep(2);
-                wHandle = d2r.MainWindowHandle;
-            }
-            //Thread.Sleep(400); // wait for game window to unpack.. TODO: use different approach
+            
+            // NOTE: if your game crashes, try to increase/decrease this value
+            while(d2r.UserProcessorTime.TotalMilliseconds < 230) // 100~500 should do the trick! (to less is crash, to much is no valid patch)
+                Thread.Sleep(1);
 
             //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
-
-            ConsolePrint("Suspending process...");
             IntPtr hProcess = OpenProcess(ProcessAccessFlags.PROCESS_ALL_ACCESS, false, d2r.Id);
-
+            ConsolePrint("Opening process...");
+           
             if (hProcess == IntPtr.Zero)
             {
                 ConsolePrint("Failed on OpenProcess. Handle is invalid.", ConsoleColor.Red);
@@ -59,9 +56,6 @@ namespace D2ROffline
                 Console.ReadKey();
                 return;
             }
-
-            // suspend process
-            NtSuspendProcess(hProcess);
 
             if (VirtualQueryEx(hProcess, d2r.MainModule.BaseAddress, out MEMORY_BASIC_INFORMATION basicInformation, Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) == 0)
             {
@@ -73,16 +67,19 @@ namespace D2ROffline
             IntPtr regionBase = basicInformation.baseAddress;
             IntPtr regionSize = basicInformation.regionSize;
 
-            // continue until process has been inited
-            ResumeToEntrypoint(hProcess, regionBase, (uint)d2r.Threads[0].Id);
-
+            // suspend process
+            WaitForData(hProcess, regionBase, 0x2454108);
+            ConsolePrint("Suspending process...");
+            NtSuspendProcess(hProcess);
             ConsolePrint("Process suspended");
+
             ConsolePrint("Remapping process..");
-            //IntPtr addr = RemapMemoryRegion(hProcess, regionBase, regionSize.ToInt32(), MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE, (uint)d2r.Threads[0].Id);
             IntPtr addr = RemapMemoryRegion(hProcess, regionBase, regionSize.ToInt32(), MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE);
+
             ConsolePrint("Resuming process..");
             NtResumeProcess(hProcess);
             CloseHandle(hProcess);
+
             ConsolePrint("Done!", ConsoleColor.Green);
             ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
             Console.ReadKey();
@@ -168,6 +165,7 @@ namespace D2ROffline
 
             status = NtUnmapViewOfSection(processHandle, baseAddress);
 
+
             if (status != Ntstatus.STATUS_SUCCESS)
                 return IntPtr.Zero;
 
@@ -194,17 +192,8 @@ namespace D2ROffline
             if (!WriteProcessMemory(processHandle, copyBufEx, copyBuf, (int)viewSize, out bytes))
                 return IntPtr.Zero;
 
-            MemoryProtectionConstraints old = MemoryProtectionConstraints.PAGE_NOACCESS;
-
-            // continue until process has been inited
-            //ResumeToEntrypoint(processHandle, baseAddress, mainThreadId);
-
             // apply all request patches
             ApplyAllPatches(processHandle, baseAddress);
-
-            NtResumeProcess(processHandle);
-            Thread.Sleep(1000);
-            NtSuspendProcess(processHandle);
 
             //crc32 bypass
             //search for F2 ?? 0F 38 F1 - F2 REX.W 0F 38 F1 /r CRC32 r64, r/m64	RM	Valid	N.E.	Accumulate CRC32 on r/m64.
@@ -258,50 +247,25 @@ namespace D2ROffline
             return addr;
         }
 
-        private static void ResumeToEntrypoint(IntPtr processHandle, IntPtr baseAddress, uint threadId)
+        private static void WaitForData(IntPtr processHandle, IntPtr baseAddress, int offset)
         {
-            IntPtr tHandle = OpenThread(ThreadAccess.GET_CONTEXT, false, threadId);
-
             // now waiting for game  to lock in inf loop
-            ConsolePrint("Waiting for process execution...");
+            ConsolePrint($"Waiting for data at 0x{(baseAddress + offset).ToString("X8")}...");
             int count = 0;
-            while (count < 100) // 5000ms timeout
+            while (count < 500) // 5000ms timeout
             {
-                //// NOTE: i tried the below thing to wait for entry point but there is some detection blocking it
-                //CONTEXT64 tContext = new CONTEXT64();
-                //tContext.ContextFlags = CONTEXT_FLAGS.CONTEXT_FULL;
-                //GetThreadContext(tHandle, ref tContext);
-                //ConsolePrint(tContext.Rip.ToString("X16"), ConsoleColor.Cyan);
-
-                //if (tContext.Rip == (ulong)targetLocation || tContext.Rip == (ulong)targetLocation + 1) // .text section dimension
-                //{
-                //    if (!WriteProcessMemory(processHandle, baseAddress + 0x1000, origByes, origByes.Length, out _)) // restore entrypoint
-                //    {
-                //        ConsolePrint("Failed writing initial process memory", ConsoleColor.Red);
-                //        return;
-                //    }
-                //    tContext.Rip = (ulong)baseAddress + 0x1000; // fix RIP
-                //    SetThreadContext(tHandle, ref tContext);
-                //    break;
-                //}
-
-                byte[] buff = new byte[1];
-                if (!ReadProcessMemory(processHandle, baseAddress + 0x22E2560, buff, buff.Length, out _)) // initFlag
+                byte[] buff = new byte[3];
+                if (!ReadProcessMemory(processHandle, baseAddress + offset, buff, buff.Length, out _)) // pre
                 {
                     ConsolePrint("Failed reading initial process memory", ConsoleColor.Red);
                     return;
                 }
-                if (buff[0] != 0x00)
+                if (buff[0] != 0x00 || buff[2] != 0x00)
                     break;
-                
 
-                NtResumeProcess(processHandle);
-                Thread.Sleep(50); // continue execution
-                NtSuspendProcess(processHandle);
+                Thread.Sleep(10); // continue execution  
                 count++;
             }
-
-            CloseHandle(tHandle);
         }
 
         private static void ApplyAllPatches(IntPtr processHandle, IntPtr baseAddress)
@@ -359,6 +323,12 @@ namespace D2ROffline
             {
                 if (addr[i] == 0)
                     continue;
+
+                if(patch[i] == null)
+                {
+                    ConsolePrint($"Invalid patch at line {i+1}!", ConsoleColor.Yellow);
+                    continue;
+                }
 
                 ConsolePrint($"Patching 0x{(baseAddress+addr[i]).ToString("X8")}");
                 if (!WriteProcessMemory(processHandle, IntPtr.Add(baseAddress, addr[i]), patch[i], patch[i].Length, out IntPtr bWritten1) || (int)bWritten1 != patch[i].Length)

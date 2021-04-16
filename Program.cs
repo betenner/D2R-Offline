@@ -11,7 +11,7 @@ namespace D2ROffline
     {
         static void Main(string[] args)
         {
-            string version = "v2.0.2-beta";
+            string version = "v2.0.3-beta";
             string d2rPath = "Game.exe";
 
             // overwrite path if args are set
@@ -39,7 +39,13 @@ namespace D2ROffline
             var d2r = Process.Start(pInfo);
 
             ConsolePrint("Process started...");
-            Thread.Sleep(400); // wait for things to unpack.. TODO: use different approach
+            var wHandle = d2r.MainWindowHandle;
+            while (wHandle == IntPtr.Zero)
+            {
+                Thread.Sleep(2);
+                wHandle = d2r.MainWindowHandle;
+            }
+            //Thread.Sleep(400); // wait for game window to unpack.. TODO: use different approach
 
             //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
 
@@ -193,6 +199,13 @@ namespace D2ROffline
             // continue until process has been inited
             //ResumeToEntrypoint(processHandle, baseAddress, mainThreadId);
 
+            // apply all request patches
+            ApplyAllPatches(processHandle, baseAddress);
+
+            NtResumeProcess(processHandle);
+            Thread.Sleep(1000);
+            NtSuspendProcess(processHandle);
+
             //crc32 bypass
             //search for F2 ?? 0F 38 F1 - F2 REX.W 0F 38 F1 /r CRC32 r64, r/m64	RM	Valid	N.E.	Accumulate CRC32 on r/m64.
             byte[] AoBpattern = { 0xF2, 0x42, 0x0F, 0x38, 0xF1 };
@@ -210,9 +223,6 @@ namespace D2ROffline
                 if (isMatch)
                     detourCRC(processHandle, (long)baseAddress + i, (long)baseAddress, (long)copyBufEx);
             }
-
-            // apply all request patches
-            ApplyAllPatches(processHandle, baseAddress);
 
             // NOTE: uncomment if you want to snitch a hook inside the .text before it remaps back from RWX to RX
 #if DEBUG
@@ -253,7 +263,7 @@ namespace D2ROffline
             IntPtr tHandle = OpenThread(ThreadAccess.GET_CONTEXT, false, threadId);
 
             // now waiting for game  to lock in inf loop
-            ConsolePrint("Waiting for process exectuion...");
+            ConsolePrint("Waiting for process execution...");
             int count = 0;
             while (count < 100) // 5000ms timeout
             {

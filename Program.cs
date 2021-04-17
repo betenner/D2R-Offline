@@ -17,7 +17,10 @@ namespace D2ROffline
             // NOTE: if you are going to copy & modify this then please atleast write my name correct!
             PrintASCIIArt(); // 'colored' logo
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"			                                       _____  _______ _______ _______ _     _ _______  ______ \n {version.PadRight(16)}			                      |_____] |_____|    |    |       |_____| |______ |_____/ \n______________________________________________________________|       |     |    |    |_____  |     | |______ |    \\_ \n");
+            Console.WriteLine($"			                                       _____  _______ _______ _______ _     _ ____" +
+                $"___  ______ \n {version.PadRight(16)}			                      |_____] |_____|    |    |       |_" +
+                $"____| |______ |_____/ \n______________________________________________________________|  " +
+                $"     |     |    |    |_____  |     | |______ |    \\_ \n");
             Console.ForegroundColor = ConsoleColor.Gray;
 
             // overwrite path if args are set

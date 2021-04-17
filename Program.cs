@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -22,7 +23,17 @@ namespace D2ROffline
 
             // overwrite path if args are set
             if (args.Length > 0)
-                d2rPath = args[0];
+            {
+                if (args[0].Equals("-FixLocalSave", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    SaveFilePatcher.PatchSaveFiles(args.ElementAtOrDefault(1));
+                    return;
+                }
+                else
+                {
+                    d2rPath = args[0];
+                }
+            }
 
             if (!File.Exists(d2rPath))
             {
@@ -139,7 +150,7 @@ namespace D2ROffline
             Console.BackgroundColor = oldb;
         }
 
-        private static void ConsolePrint(string str, ConsoleColor color = ConsoleColor.Gray)
+        public static void ConsolePrint(string str, ConsoleColor color = ConsoleColor.Gray)
         {
             ConsoleColor old = Console.ForegroundColor;
             Console.ForegroundColor = color;

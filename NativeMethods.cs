@@ -55,6 +55,8 @@ namespace D2ROffline
 
         [DllImport("kernel32.dll")]
         public static extern int ResumeThread(IntPtr hThread);
+        [DllImport("shell32.dll")]
+        public static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)] Guid rfid, uint dwFlags, IntPtr hToken, out IntPtr pszPath);
 
     }
     public enum AccessMask : uint
@@ -280,5 +282,11 @@ namespace D2ROffline
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 96)]
         public byte[] Reserved4;
+    }
+
+    public static class KnownFolder
+    {
+        // https://docs.microsoft.com/en-us/windows/win32/shell/knownfolderid
+        public static readonly Guid SavedGames = Guid.Parse("4C5C32FF-BB9D-43b0-B5B4-2D72E54EAAA4");
     }
 }

@@ -63,7 +63,7 @@ Language patches to force the client into loading a language, thanks to Ferib (m
 0x1446C8:+0x270CC: ~ Polski *[plPL]*
 0x1446C8:+0x270D4: ~ Russian *[ruRU]*
 0x1446C8:+0x270DC: ~ Chinese (simplified) *[zhCN]*
-0x1446C8:+0x270E4: ~ Taiwan *[zhTW]*
+0x1446C8:+0x270E4: ~ Chinese *[zhTW]*
 0x1446C8:+0x270EC: ~ Spanish *[esMX]*
 0x1446C8:+0x270F4: ~ Japanese *[jaJP]*
 0x1446C8:+0x270FC: ~ Brazilian *[ptBR]*

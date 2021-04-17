@@ -27,12 +27,12 @@ namespace D2ROffline
                 if (args[0].Equals("-FixLocalSave", StringComparison.InvariantCultureIgnoreCase))
                 {
                     SaveFilePatcher.PatchSaveFiles(args.ElementAtOrDefault(1));
+                    ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
+                    Console.ReadKey();
                     return;
                 }
                 else
-                {
                     d2rPath = args[0];
-                }
             }
 
             if (!File.Exists(d2rPath))
@@ -48,7 +48,7 @@ namespace D2ROffline
 
             var pInfo = new ProcessStartInfo(d2rPath);
 
-            if (args.Length != 1)
+            if (args.Length > 1)
                 pInfo.Arguments = args[1];
             else 
                 ConsolePrint("Extra parameters not found. Proceeding...", ConsoleColor.DarkYellow);

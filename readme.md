@@ -10,20 +10,13 @@ More information about the crc32 bypassing and remapping can be found in my '[By
 
 .NET Framework v4.7.2 is required, which you can download at https://dotnet.microsoft.com/download/dotnet-framework/thank-you/net472-web-installer
 
+Download the latest release *(or clone a project and build using Visual Studio)*
 
-Clone the project
-``git clone ``
+Copy **both** `D2ROffline.exe` and `patches.txt` to your Diablo 2 Resurrected game folder and then double-click `D2ROffline.exe` to start the tool.
 
-Build using Visual Studio
+That's about it!
 
-Move to output
-``cd bin/Debug/netcoreapp3.1/``
-
-Finally, launch the executable using `path` to `game.exe` as argument
-``./D2ROffline.exe C:/D2R/Game.exe``
-
-You can also use the `-txt` parameter to use `.txt`/`.bin` files.
-``./D2ROffline.exe C:/D2R/Game.exe -txt``
+*NOTE: For those who want to add (or remove) patches, open the `patches.txt` and start modifying them.*
 
 ## Custom Patches
 

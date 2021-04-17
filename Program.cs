@@ -37,27 +37,18 @@ namespace D2ROffline
 
             var pInfo = new ProcessStartInfo(d2rPath);
 
-            if (args.Length != 1)
-                pInfo.Arguments = args[1];
-            else 
-                ConsolePrint("Extra parameters not found. Proceeding...", ConsoleColor.DarkYellow);
+            //if (args.Length != 1)
+            //    pInfo.Arguments = args[1];
+            //else 
+            //    ConsolePrint("Extra parameters not found. Proceeding...", ConsoleColor.DarkYellow);
 
             var d2r = Process.Start(pInfo);
 
             // wait for proc to properly enter userland to bypass first few anti-cheating checks
             ConsolePrint("Process started...");
 
-            //// NOTE: if your game crashes, try to increase/decrease this value
-            //while (d2r.UserProcessorTime.TotalMilliseconds < 230) // 100~500 should do the trick! (to less is crash, to much is no valid patch)
-            //    Thread.Sleep(1);
-
-            //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
             IntPtr hProcess = OpenProcess(ProcessAccessFlags.PROCESS_ALL_ACCESS, false, d2r.Id);
             ConsolePrint("Opening process...");
-            
-            // pre setup
-            WaitForData(hProcess, d2r.MainModule.BaseAddress, 0x22D8858);
-
             if (hProcess == IntPtr.Zero)
             {
                 ConsolePrint("Failed on OpenProcess. Handle is invalid.", ConsoleColor.Red);
@@ -65,6 +56,15 @@ namespace D2ROffline
                 Console.ReadKey();
                 return;
             }
+
+            // pre setup
+            WaitForData(hProcess, d2r.MainModule.BaseAddress, 0x22D8858);
+            Thread.Sleep(20); // NOTE: patch before this to get language working, may causes crash?
+
+            // suspend process
+            ConsolePrint("Suspending process...");
+            NtSuspendProcess(hProcess);
+            ConsolePrint("Process suspended");
 
             if (VirtualQueryEx(hProcess, d2r.MainModule.BaseAddress, out MEMORY_BASIC_INFORMATION basicInformation, Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) == 0)
             {
@@ -75,12 +75,6 @@ namespace D2ROffline
             }
             IntPtr regionBase = basicInformation.baseAddress;
             IntPtr regionSize = basicInformation.regionSize;
-
-            // suspend process
-            WaitForData(hProcess, regionBase, 0x2454108);
-            ConsolePrint("Suspending process...");
-            NtSuspendProcess(hProcess);
-            ConsolePrint("Process suspended");
 
             ConsolePrint("Remapping process..");
             IntPtr addr = RemapMemoryRegion(hProcess, regionBase, regionSize.ToInt32(), MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE);

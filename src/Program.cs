@@ -70,6 +70,7 @@ namespace D2ROffline
 
             // pre setup
             WaitForData(hProcess, d2r.MainModule.BaseAddress, 0x22D8858);
+            Thread.Sleep(25); // NOTE: getting crash? extend this delay!
 
             // suspend process
             ConsolePrint("Suspending process...");

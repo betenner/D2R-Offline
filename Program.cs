@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -11,21 +12,34 @@ namespace D2ROffline
     {
         static void Main(string[] args)
         {
-            string version = "v2.0.4-beta";
+            string version = "v2.0.5-beta";
             string d2rPath = "Game.exe";
 
             // NOTE: if you are going to copy & modify this then please atleast write my name correct!
             PrintASCIIArt(); // 'colored' logo
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"			                                       _____  _______ _______ _______ _     _ ____" +
-                $"___  ______ \n {version.PadRight(16)}			                      |_____] |_____|    |    |       |_" +
-                $"____| |______ |_____/ \n______________________________________________________________|  " +
-                $"     |     |    |    |_____  |     | |______ |    \\_ \n");
+            Console.WriteLine($"			                                       _____  _______ _______ ____" +
+                $"___ _     _ _______  ______ \n {version.PadRight(16)}			                " +
+                $"      |_____] |_____|    |    |       |_____| |______ |_____/ \n___");
+            Console.WriteLine($"_____________________" +
+                $"_________________________" +
+                $"_____________|       |     |    |   " +
+                $" |_____  |     | |______ |    \\_ \n");
             Console.ForegroundColor = ConsoleColor.Gray;
 
             // overwrite path if args are set
             if (args.Length > 0)
-                d2rPath = args[0];
+            {
+                if (args[0].Equals("-FixLocalSave", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    SaveFilePatcher.PatchSaveFiles(args.ElementAtOrDefault(1));
+                    ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
+                    Console.ReadKey();
+                    return;
+                }
+                else
+                    d2rPath = args[0];
+            }
 
             if (!File.Exists(d2rPath))
             {
@@ -40,18 +54,27 @@ namespace D2ROffline
 
             var pInfo = new ProcessStartInfo(d2rPath);
 
-            //if (args.Length != 1)
-            //    pInfo.Arguments = args[1];
-            //else 
-            //    ConsolePrint("Extra parameters not found. Proceeding...", ConsoleColor.DarkYellow);
+            if (args.Length > 1)
+                pInfo.Arguments = args[1];
+            else 
+                ConsolePrint("Extra parameters not found. Proceeding...", ConsoleColor.DarkYellow);
 
             var d2r = Process.Start(pInfo);
 
             // wait for proc to properly enter userland to bypass first few anti-cheating checks
             ConsolePrint("Process started...");
 
+            //// NOTE: if your game crashes, try to increase/decrease this value
+            //while (d2r.UserProcessorTime.TotalMilliseconds < 230) // 100~500 should do the trick! (to less is crash, to much is no valid patch)
+            //    Thread.Sleep(1);
+
+            //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
             IntPtr hProcess = OpenProcess(ProcessAccessFlags.PROCESS_ALL_ACCESS, false, d2r.Id);
             ConsolePrint("Opening process...");
+            
+            // pre setup
+            WaitForData(hProcess, d2r.MainModule.BaseAddress, 0x22D8858);
+
             if (hProcess == IntPtr.Zero)
             {
                 ConsolePrint("Failed on OpenProcess. Handle is invalid.", ConsoleColor.Red);
@@ -59,15 +82,6 @@ namespace D2ROffline
                 Console.ReadKey();
                 return;
             }
-
-            // pre setup
-            WaitForData(hProcess, d2r.MainModule.BaseAddress, 0x22D8858);
-            Thread.Sleep(20); // NOTE: patch before this to get language working, may causes crash?
-
-            // suspend process
-            ConsolePrint("Suspending process...");
-            NtSuspendProcess(hProcess);
-            ConsolePrint("Process suspended");
 
             if (VirtualQueryEx(hProcess, d2r.MainModule.BaseAddress, out MEMORY_BASIC_INFORMATION basicInformation, Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) == 0)
             {
@@ -78,6 +92,12 @@ namespace D2ROffline
             }
             IntPtr regionBase = basicInformation.baseAddress;
             IntPtr regionSize = basicInformation.regionSize;
+
+            // suspend process
+            WaitForData(hProcess, regionBase, 0x2454108);
+            ConsolePrint("Suspending process...");
+            NtSuspendProcess(hProcess);
+            ConsolePrint("Process suspended");
 
             ConsolePrint("Remapping process..");
             IntPtr addr = RemapMemoryRegion(hProcess, regionBase, regionSize.ToInt32(), MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE);
@@ -136,7 +156,7 @@ namespace D2ROffline
             Console.BackgroundColor = oldb;
         }
 
-        private static void ConsolePrint(string str, ConsoleColor color = ConsoleColor.Gray)
+        public static void ConsolePrint(string str, ConsoleColor color = ConsoleColor.Gray)
         {
             ConsoleColor old = Console.ForegroundColor;
             Console.ForegroundColor = color;

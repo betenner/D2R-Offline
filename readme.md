@@ -72,9 +72,12 @@ Language patches to force the client into loading a language, thanks to Ferib (m
 0x1446C8:+0x270F4: ~ Japanese *[jaJP]*
 0x1446C8:+0x270FC: ~ Brazilian *[ptBR]*
 ```
+## Mutiplayer (tcp/ip)
+Want to test out multiplayer mode? feel free to join my server at `ferib.dev` and come say hi!
+
+Also, feel free to [donate money](https://github.com/sponsors/ferib) in case you made it this far, this will keep me motivated to work on Diablo2Resurrected related projects and to keep the server going, thanks!
 
 ## Download Game Files
-
 Download this project: https://github.com/barncastle/Battle.Net-Installer/releases/tag/v1.3
 Then use as `BNetInstaller.exe --prod osib --uid osi_beta --lang enus --dir "C:\D2R"`
 

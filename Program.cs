@@ -12,13 +12,19 @@ namespace D2ROffline
     {
         static void Main(string[] args)
         {
-            string version = "v2.0.4-beta";
+            string version = "v2.0.5-beta";
             string d2rPath = "Game.exe";
 
             // NOTE: if you are going to copy & modify this then please atleast write my name correct!
             PrintASCIIArt(); // 'colored' logo
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"			                                       _____  _______ _______ _______ _     _ _______  ______ \n {version.PadRight(16)}			                      |_____] |_____|    |    |       |_____| |______ |_____/ \n______________________________________________________________|       |     |    |    |_____  |     | |______ |    \\_ \n");
+            Console.WriteLine($"			                                       _____  _______ _______ ____" +
+                $"___ _     _ _______  ______ \n {version.PadRight(16)}			                " +
+                $"      |_____] |_____|    |    |       |_____| |______ |_____/ \n___");
+            Console.WriteLine($"_____________________" +
+                $"_________________________" +
+                $"_____________|       |     |    |   " +
+                $" |_____  |     | |______ |    \\_ \n");
             Console.ForegroundColor = ConsoleColor.Gray;
 
             // overwrite path if args are set

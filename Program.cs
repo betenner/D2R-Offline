@@ -10,22 +10,29 @@ namespace D2ROffline
 {
     class Program : NativeMethods
     {
+        public static string version = "v2.0.5";
+
         static void Main(string[] args)
         {
-            string version = "v2.0.5-beta";
-            string d2rPath = "Game.exe";
+            // print ASCII logo (PNG's are overrated, change my mind)
+            PrintASCIIArt(); 
 
-            // NOTE: if you are going to copy & modify this then please atleast write my name correct!
-            PrintASCIIArt(); // 'colored' logo
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"			                                       _____  _______ _______ ____" +
-                $"___ _     _ _______  ______ \n {version.PadRight(16)}			                " +
-                $"      |_____] |_____|    |    |       |_____| |______ |_____/ \n___");
-            Console.WriteLine($"_____________________" +
-                $"_________________________" +
-                $"_____________|       |     |    |   " +
-                $" |_____  |     | |______ |    \\_ \n");
-            Console.ForegroundColor = ConsoleColor.Gray;
+            // Core patcher logic
+            if(!Start(args))
+            {
+                ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
+                Console.ReadKey();
+                return;
+            }
+
+            ConsolePrint("Done!", ConsoleColor.Green);
+            ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
+            Console.ReadKey();
+        }
+
+        private static bool Start(string[] args)
+        {
+            string d2rPath = "Game.exe";
 
             // overwrite path if args are set
             if (args.Length > 0)
@@ -33,9 +40,7 @@ namespace D2ROffline
                 if (args[0].Equals("-FixLocalSave", StringComparison.InvariantCultureIgnoreCase))
                 {
                     SaveFilePatcher.PatchSaveFiles(args.ElementAtOrDefault(1));
-                    ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
-                    Console.ReadKey();
-                    return;
+                    return true;
                 }
                 else
                     d2rPath = args[0];
@@ -45,59 +50,46 @@ namespace D2ROffline
             {
                 ConsolePrint($"Error, {d2rPath} does not exist!", ConsoleColor.Red);
                 ConsolePrint("Usage: D2ROffline.exe PATH_TO_GAMEDOTEXE", ConsoleColor.White);
-                ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
-                Console.ReadKey();
-                return;
+                return false;
             }
 
             ConsolePrint("Launching game...");
-
             var pInfo = new ProcessStartInfo(d2rPath);
 
             if (args.Length > 1)
                 pInfo.Arguments = args[1];
-            else 
+            else
                 ConsolePrint("Extra parameters not found. Proceeding...", ConsoleColor.DarkYellow);
 
             var d2r = Process.Start(pInfo);
 
             // wait for proc to properly enter userland to bypass first few anti-cheating checks
             ConsolePrint("Process started...");
-
-            //// NOTE: if your game crashes, try to increase/decrease this value
-            //while (d2r.UserProcessorTime.TotalMilliseconds < 230) // 100~500 should do the trick! (to less is crash, to much is no valid patch)
-            //    Thread.Sleep(1);
-
-            //var d2r = Process.GetProcessesByName("Game").FirstOrDefault();
             IntPtr hProcess = OpenProcess(ProcessAccessFlags.PROCESS_ALL_ACCESS, false, d2r.Id);
             ConsolePrint("Opening process...");
-            
+
             // pre setup
             WaitForData(hProcess, d2r.MainModule.BaseAddress, 0x22D8858);
+
+            // suspend process
+            ConsolePrint("Suspending process...");
+            NtSuspendProcess(hProcess);
+            ConsolePrint("Process suspended");
 
             if (hProcess == IntPtr.Zero)
             {
                 ConsolePrint("Failed on OpenProcess. Handle is invalid.", ConsoleColor.Red);
-                ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
-                Console.ReadKey();
-                return;
+                return false;
             }
 
             if (VirtualQueryEx(hProcess, d2r.MainModule.BaseAddress, out MEMORY_BASIC_INFORMATION basicInformation, Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) == 0)
             {
                 ConsolePrint("Failed on VirtualQueryEx. Return is 0 bytes.", ConsoleColor.Red);
-                ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
-                Console.ReadKey();
-                return;
+                return false;
             }
+
             IntPtr regionBase = basicInformation.baseAddress;
             IntPtr regionSize = basicInformation.regionSize;
-
-            // suspend process
-            WaitForData(hProcess, regionBase, 0x2454108);
-            ConsolePrint("Suspending process...");
-            NtSuspendProcess(hProcess);
-            ConsolePrint("Process suspended");
 
             ConsolePrint("Remapping process..");
             IntPtr addr = RemapMemoryRegion(hProcess, regionBase, regionSize.ToInt32(), MemoryProtectionConstraints.PAGE_EXECUTE_READWRITE);
@@ -105,12 +97,8 @@ namespace D2ROffline
             ConsolePrint("Resuming process..");
             NtResumeProcess(hProcess);
             CloseHandle(hProcess);
-
-            ConsolePrint("Done!", ConsoleColor.Green);
-            ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
-            Console.ReadKey();
+            return true;
         }
-
         private static void PrintASCIIArt()
         {
             // print chars individual to set color
@@ -150,12 +138,24 @@ namespace D2ROffline
                 buffer += Diablo2ASCII[i];
             }
             Console.WriteLine(buffer);
+
+            // print footer
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"			                                       _____  _______ _______ ____" +
+                $"___ _     _ _______  ______ \n {version.PadRight(16)}			                " +
+                $"      |_____] |_____|    |    |       |_____| |______ |_____/ \n___");
+            Console.WriteLine($"_____________________" +
+                $"_________________________" +
+                $"_____________|       |     |    |   " +
+                $" |_____  |     | |______ |    \\_ \n");
+            Console.ForegroundColor = ConsoleColor.Gray;
+
+
             Console.ForegroundColor = ConsoleColor.Black;
             Console.BackgroundColor = ConsoleColor.DarkGray;
             Console.ForegroundColor = oldf;
             Console.BackgroundColor = oldb;
         }
-
         public static void ConsolePrint(string str, ConsoleColor color = ConsoleColor.Gray)
         {
             ConsoleColor old = Console.ForegroundColor;
@@ -164,7 +164,7 @@ namespace D2ROffline
             Console.ForegroundColor = old;
         }
 
-        //public static IntPtr RemapMemoryRegion(IntPtr processHandle, IntPtr baseAddress, int regionSize, MemoryProtectionConstraints mapProtection, uint mainThreadId)
+        // Memory function
         public static IntPtr RemapMemoryRegion(IntPtr processHandle, IntPtr baseAddress, int regionSize, MemoryProtectionConstraints mapProtection)
         {
             IntPtr addr = VirtualAllocEx(processHandle, IntPtr.Zero, regionSize, MemoryAllocationType.MEM_COMMIT | MemoryAllocationType.MEM_RESERVE, mapProtection);
@@ -272,7 +272,6 @@ namespace D2ROffline
 
             return addr;
         }
-
         private static void WaitForData(IntPtr processHandle, IntPtr baseAddress, int offset)
         {
             // now waiting for game  to lock in inf loop
@@ -293,7 +292,6 @@ namespace D2ROffline
                 count++;
             }
         }
-
         private static void ApplyAllPatches(IntPtr processHandle, IntPtr baseAddress)
         {
             // NOTE: you can make a 'patches.txt' file, using the format '0x1234:9090' where 0x1234 indicates the offset (game.exe+0x1234) and 9090 indicates the patch value (nop nop)
@@ -362,7 +360,6 @@ namespace D2ROffline
             }
 
         }
-
         public static bool detourCRC(IntPtr processHandle, long crcLocation, long wowBase, long wowCopyBase)
         {
             #region asmCave
@@ -547,6 +544,7 @@ namespace D2ROffline
             return true;
         }
 
+        // NOTE: experimental for .rdata
         public static bool detourCRC_Experimental(IntPtr processHandle, long crcLocation, long wowBase, long wowCopyBase)
         {
             #region asmCave

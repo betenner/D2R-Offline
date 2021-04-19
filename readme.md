@@ -16,9 +16,11 @@ Copy **both** `D2ROffline.exe` and `patches.txt` to your Diablo 2 Resurrected ga
 
 That's about it!
 
-After v2.0.5, using `D2ROffline.exe -FixLocalSave` in the command line to patch your character or the legacy d2 character to enter the single-player game. The saved location will be `C:\Users\<Username>\Saved Games\Diablo II Resurrected Tech Alpha`.
-
 *NOTE: For those who want to add (or remove) patches, open the `patches.txt` and start modifying them.*
+
+## Advanced Usage
+
+Using `D2ROffline.exe -FixLocalSave` in the command line to patch your character or the legacy d2 character to enter the single-player game. The saved location will be `C:\Users\<Username>\Saved Games\Diablo II Resurrected Tech Alpha`.
 
 ## Custom Patches
 

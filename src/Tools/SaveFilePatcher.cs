@@ -2,7 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace D2ROffline
+namespace D2ROffline.Tools
 {
     internal class SaveFilePatcher : NativeMethods
     {

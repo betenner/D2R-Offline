@@ -63,10 +63,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Tools\KeyBindingSync.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SaveFilePatcher.cs" />
+    <Compile Include="Tools\Patcher.cs" />
+    <Compile Include="Tools\SaveFilePatcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

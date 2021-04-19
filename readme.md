@@ -1,6 +1,6 @@
 # Diablo II: Resurrected - Offline Patcher
 
-A simple tool that remaps & bypasses *Diablo II Resurrected* module and then continues to patch connection functions to allow local gameplay. 
+A simple tool that remaps & bypasses *Diablo II Resurrected* module and then continues to patch connection functions to allow local gameplay.
 
 More information about the crc32 bypassing and remapping can be found in my '[Bypassing World of Warcraft's Read-Only Code Protection (crc32)](https://ferib.dev/blog.php?l=post/Bypassing_World_of_Warcraft_Crc32_Integrity_Checks)' blog post
 
@@ -15,6 +15,8 @@ Download the latest release *(or clone a project and build using Visual Studio)*
 Copy **both** `D2ROffline.exe` and `patches.txt` to your Diablo 2 Resurrected game folder and then double-click `D2ROffline.exe` to start the tool.
 
 That's about it!
+
+After v2.0.5, using `D2ROffline.exe -FixLocalSave` in the command line to patch your character or the legacy d2 character to enter the single-player game. The saved location will be `C:\Users\<Username>\Saved Games\Diablo II Resurrected Tech Alpha`.
 
 *NOTE: For those who want to add (or remove) patches, open the `patches.txt` and start modifying them.*
 
@@ -68,7 +70,7 @@ Language patches to force the client into loading a language, thanks to Ferib (m
 0x1446C8:+0x270FC: ~ Brazilian *[ptBR]*
 ```
 
-## Mutiplayer (tcp/ip)
+## Mutiplayer (TCP/IP)
 Want to test out multiplayer mode? feel free to join my server at `ferib.dev` and come say hi!
 
 Also, feel free to [donate money](https://github.com/sponsors/ferib) in case you made it this far, this will keep me motivated to work on Diablo2Resurrected related projects and to keep the server going, thanks!
@@ -78,10 +80,10 @@ Download this project: https://github.com/barncastle/Battle.Net-Installer/releas
 Then use as `BNetInstaller.exe --prod osib --uid osi_beta --lang enus --dir "C:\D2R"`
 
 ## Notices
-This repository is for educational purposes only. 
+This repository is for educational purposes only.
 Please do not perform any of the above actions on the Game client.
 
-Diablo II and Diablo II: Resurrected are registered trademarks of Blizzard Entertainment. 
+Diablo II and Diablo II: Resurrected are registered trademarks of Blizzard Entertainment.
 This project is not affiliated with Blizzard Entertainment in any way.
 
 

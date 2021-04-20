@@ -43,7 +43,7 @@ namespace D2ROffline.Tools
 
             // pre setup
             WaitForData(hProcess, d2r.MainModule.BaseAddress, 0x22D8858);
-            Thread.Sleep(25); // NOTE: getting crash? extend this delay!
+            Thread.Sleep(crashDelay); // NOTE: getting crash? extend this delay!
 
             // suspend process
             Program.ConsolePrint("Suspending process...");
@@ -145,8 +145,8 @@ namespace D2ROffline.Tools
 
             // NOTE: uncomment if you want to snitch a hook inside the .text before it remaps back from RWX to RX
 #if DEBUG
-            ConsolePrint("Patching complete..");
-            ConsolePrint("[!] Press any key to remap and resume proces...", ConsoleColor.Yellow);
+            Program.ConsolePrint("Patching complete..");
+            Program.ConsolePrint("[!] Press any key to remap and resume proces...", ConsoleColor.Yellow);
             Console.ReadKey();
 #endif
 

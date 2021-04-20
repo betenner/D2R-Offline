@@ -1,26 +1,50 @@
 # Diablo II: Resurrected - Offline Patcher
 
-A simple tool that remaps & bypasses *Diablo II Resurrected* module and then continues to patch connection functions to allow local gameplay.
+A simple tool that remaps & bypasses *Diablo II Resurrected* module and then continues to patch connection functions to allow local gameplay. 
 
 More information about the crc32 bypassing and remapping can be found in my '[Bypassing World of Warcraft's Read-Only Code Protection (crc32)](https://ferib.dev/blog.php?l=post/Bypassing_World_of_Warcraft_Crc32_Integrity_Checks)' blog post
 
 ![diablo 2 resurrected screenshot](https://github.com/ferib/D2R-Offline/blob/master/img/weird_group_flex.jpg?raw=true)
 
+# Setup
+## Installation
+
+
+1. You will need the Diablo II: Resurrected game files.
+
+1. You will need .NET Framework v4.7.2, which you can download at:  
+https://dotnet.microsoft.com/download/dotnet-framework/thank-you/net472-web-installer
+
+1. Download the latest release *(or clone the project and build it)* :  
+https://github.com/ferib/D2R-Offline/releases  
+Unzip and copy **both** `D2ROffline.exe` and `patches.txt` to your Diablo II: Resurrected game folder. They should be in the same directory as `Game.exe`.
+
+## Run
+
+1. Double-click `D2ROffline.exe` to start the tool.
+
+1. A cmd window should open and begin the patching process, then prompt you to hit any key to continue, then the game should open. You can then close the cmd window.
+
+1. When loading a character, use the TCP/IP button and host a game, double clicking the character name or clicking Play will not work by default. See the `-FixLocalSave` argument under [Usage](#Usage) if you would like to edit your saves to work in offline mode.
+
+## Please see the [FAQ](FAQ.md) if you have any issues.
+
 # Usage
 
-.NET Framework v4.7.2 is required, which you can download at https://dotnet.microsoft.com/download/dotnet-framework/thank-you/net472-web-installer
+## Arguments
+You can run `D2ROffline.exe` with arguments to solve some problems.
 
-Download the latest release *(or clone a project and build using Visual Studio)*
+### -FixLocalSave
+`.\D2ROffline.exe -FixLocalSave` This will update your save files to allow you to play your characters in single player mode instead of hosting a TCP/IP game. This argument will not also run the game, it just runs a one-off process.
 
-Copy **both** `D2ROffline.exe` and `patches.txt` to your Diablo 2 Resurrected game folder and then double-click `D2ROffline.exe` to start the tool.
+### -UpdateKeyBinds
+`.\D2ROffline.exe -UpdateKeyBinds` This will sync your keybindings between characters.
 
-That's about it!
+### -Delay \<delay in ms>
+`.\D2ROffline.exe -Delay 35` This will change the delay amount when patching your game, default is 25. Use this and try different values to help with crashes after being in-game for certain amounts of time.
 
-*NOTE: For those who want to add (or remove) patches, open the `patches.txt` and start modifying them.*
-
-## Advanced Usage
-
-Using `D2ROffline.exe -FixLocalSave` in the command line to patch your character or the legacy d2 character to enter the single-player game. The saved location will be `C:\Users\<Username>\Saved Games\Diablo II Resurrected Tech Alpha`.
+### "Game.exe file path"
+`.\D2ROffline.exe "C:\D2R\Game.exe"` Use this to specify a path to Game.exe if you're not running `D2ROffline.exe` from the same directory.
 
 ## Custom Patches
 
@@ -43,18 +67,6 @@ All classes & Multiplayer access, thanks to [shalzuth]()
 0x39FC03:9090909090909090909090909090909090909090: ~ allow chars to load (shalzuth)
 ```
 
-Some more, Thanks to [ejt](https://www.ownedcore.com/forums/diablo-2-resurrected/diablo-2-resurrected-bots-programs/940906-0-1-62115-offsets.html) & [Crazyloon](https://www.ownedcore.com/forums/diablo-2-resurrected/diablo-2-resurrected-bots-programs/940906-0-1-62115-offsets.html).
-```
-0x1EE3200:90: ~ allowLadderRunewords
-0x1EE3201:90: ~ displayItemLevel
-0x1EE31FF:90: ~ allowCowPortalWhenCowKingWasKilled
-0x1EE3203:90: ~ enableUberQuest
-0x1EE3202:90: ~ allowStatUnassignment
-0x1EE3204:90: ~ allowSkillUnassignment (doesn't seem to be working)
-0x1EE320D:90: ~ enableWorldEventOffline (Assume Uber Diablo - haven't tested)
-0x1EE320E:90: ~ enableMultipleHirelings
-```
-
 Language patches to force the client into loading a language, thanks to Ferib (me).
 ```
 0x1446C8:+0x00: ~ English *[enUS]*
@@ -72,20 +84,16 @@ Language patches to force the client into loading a language, thanks to Ferib (m
 0x1446C8:+0x270FC: ~ Brazilian *[ptBR]*
 ```
 
-## Mutiplayer (TCP/IP)
+## Mutiplayer (tcp/ip)
 Want to test out multiplayer mode? feel free to join my server at `ferib.dev` and come say hi!
 
 Also, feel free to [donate money](https://github.com/sponsors/ferib) in case you made it this far, this will keep me motivated to work on Diablo2Resurrected related projects and to keep the server going, thanks!
 
-## Download Game Files
-Download this project: https://github.com/barncastle/Battle.Net-Installer/releases/tag/v1.3
-Then use as `BNetInstaller.exe --prod osib --uid osi_beta --lang enus --dir "C:\D2R"`
-
 ## Notices
-This repository is for educational purposes only.
+This repository is for educational purposes only. 
 Please do not perform any of the above actions on the Game client.
 
-Diablo II and Diablo II: Resurrected are registered trademarks of Blizzard Entertainment.
+Diablo II and Diablo II: Resurrected are registered trademarks of Blizzard Entertainment. 
 This project is not affiliated with Blizzard Entertainment in any way.
 
 

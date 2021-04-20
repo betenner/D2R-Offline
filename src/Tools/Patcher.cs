@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using D2ROffline;
+using System.Security.Cryptography.X509Certificates;
 
 namespace D2ROffline.Tools
 {
@@ -49,6 +50,13 @@ namespace D2ROffline.Tools
             Program.ConsolePrint("Suspending process...");
             NtSuspendProcess(hProcess);
             Program.ConsolePrint("Process suspended");
+
+            X509Certificate data = X509Certificate.CreateFromSignedFile(d2rPath);
+            if(!data.Subject.Contains(" Entertainment, "))
+            {
+                Program.ConsolePrint("Error, the target process is not a game?");
+                return false;
+            }
 
             if (VirtualQueryEx(hProcess, d2r.MainModule.BaseAddress, out MEMORY_BASIC_INFORMATION basicInformation, Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) == 0)
             {
@@ -214,6 +222,8 @@ namespace D2ROffline.Tools
             byte[][] patch = new byte[split.Length][];
 
             // init arrays
+            // NOTE: limiting the amount of bytes to patch to prevent malicous abuse!
+            int bytePatchCount = 0;
             for (int i = 0; i < split.Length; i++)
             {
                 string[] data = split[i].Split(':');
@@ -258,6 +268,12 @@ namespace D2ROffline.Tools
                     continue;
                 }
 
+                bytePatchCount += patch.Length;
+                if(bytePatchCount > 128) // NOTE: this is to prevent people from inject asm malware payloads using the patches.txt feature
+                {
+                    Program.ConsolePrint($"Patch 0x{(baseAddress + addr[i]).ToString("X8")} reject, maximum patch sized reached!", ConsoleColor.Red);
+                    continue;
+                }
                 Program.ConsolePrint($"Patching 0x{(baseAddress + addr[i]).ToString("X8")}");
                 if (!WriteProcessMemory(processHandle, IntPtr.Add(baseAddress, addr[i]), patch[i], patch[i].Length, out IntPtr bWritten1) || (int)bWritten1 != patch[i].Length)
                     Program.ConsolePrint($"Patch {i} failed!!", ConsoleColor.Red);

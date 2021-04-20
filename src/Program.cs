@@ -61,7 +61,7 @@ namespace D2ROffline
                         Console.WriteLine("Bad argument for -Delay");
                         return false;
                     }
-                    ConsolePrint($"Delay has been set to: {crashDelay}", ConsoleColor.DarkYellow);
+                    ConsolePrint($"Delay has been set to: {crashDelay}ms", ConsoleColor.DarkYellow);
 
                     // if user is setting a custom delay value and specifying game.exe path
                     if (args.Length > 3)

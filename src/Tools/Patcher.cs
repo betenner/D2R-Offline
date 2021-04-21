@@ -269,7 +269,7 @@ namespace D2ROffline.Tools
                 }
 
                 bytePatchCount += patch.Length;
-                if(bytePatchCount > 128) // NOTE: this is to prevent people from inject asm malware payloads using the patches.txt feature
+                if(bytePatchCount > 200) // NOTE: this is to prevent people from inject asm malware payloads using the patches.txt feature
                 {
                     Program.ConsolePrint($"Patch 0x{(baseAddress + addr[i]).ToString("X8")} reject, maximum patch sized reached!", ConsoleColor.Red);
                     continue;

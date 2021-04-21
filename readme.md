@@ -61,10 +61,11 @@ Offline/Local patch, thanks to [king48488](https://www.ownedcore.com/forums/diab
 0x597E1C:90909090909090
 ```
 
-All classes & Multiplayer access, thanks to [shalzuth]()
+All classes, Multiplayer access and unlock act3~5 thanks to [shalzuth]()
 ```
 0xD615F2:909090909090909090909090909090909090909090909090909090: ~ show all calsses on load (shalzuth)
 0x39FC03:9090909090909090909090909090909090909090: ~ allow chars to load (shalzuth)
+0x39FCB6:909090909090909090: ~ enable loading into a3-a5 (shalzuth)
 ```
 
 Language patches to force the client into loading a language, thanks to Ferib (me).

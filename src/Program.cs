@@ -11,7 +11,7 @@ namespace D2ROffline
 {
     public class Program : NativeMethods
     {
-        public static string version = "v2.0.6";
+        public static string version = "v2.0.7";
 
         static void Main(string[] args)
         {
@@ -27,8 +27,10 @@ namespace D2ROffline
             }
 
             ConsolePrint("Done!", ConsoleColor.Green);
+#if !DEBUG
             ConsolePrint("Press any key to exit...", ConsoleColor.Yellow);
             Console.ReadKey();
+#endif
         }
 
         private static bool HandlerArgs(string[] args)
@@ -37,6 +39,8 @@ namespace D2ROffline
             int crashDelay = 25;
             if (args.Length > 0)
             {
+                if(args.Length > 1)
+                    gameArgs = args[1]; // may gets overwritten somwhere else
                 if (args[0].Equals("-FixLocalSave", StringComparison.InvariantCultureIgnoreCase))
                 {
                     // hande FixLocalSave
@@ -49,20 +53,19 @@ namespace D2ROffline
                     KeyBindingSync.SyncKeyBindings(args.ElementAtOrDefault(1));
                     return false;
                 }
-                else if (args[0].Equals("-Delay", StringComparison.InvariantCultureIgnoreCase))
+                else if (args.Length > 1 && args[1].Equals("-Delay", StringComparison.InvariantCultureIgnoreCase))
                 {
                     // Handle Delay
-                    if(!Int32.TryParse(args[1], out crashDelay))
+                    if(!Int32.TryParse(args[2], out crashDelay))
                     {
                         Console.WriteLine("Bad argument for -Delay");
                         return false;
                     }
+                    ConsolePrint($"Delay has been set to: {crashDelay}ms", ConsoleColor.DarkYellow);
 
                     // if user is setting a custom delay value and specifying game.exe path
-                    if (args.Length > 2)
-                    {
-                        gameArgs = args[0];
-                    }
+                    if (args.Length > 3)
+                        gameArgs = args[3];
                 }
                 // launch with extra CLI options
                 return Patcher.Start(args[0], crashDelay, gameArgs);

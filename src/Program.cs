@@ -116,7 +116,7 @@ namespace D2ROffline
 
             // print footer
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"			                                       _____  _______ _______ ____" +
+            Console.Write($"			                                       _____  _______ _______ ____" +
                 $"___ _     _ _______  ______ \n {Program.version.PadRight(16)}			                " +
                 $"      |_____] |_____|    |    |       |_____| |______ |_____/ \n___");
             Console.WriteLine($"_____________________" +

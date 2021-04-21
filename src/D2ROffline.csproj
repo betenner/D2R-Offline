@@ -63,6 +63,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Tools\Constants.cs" />
     <Compile Include="Tools\KeyBindingSync.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Program.cs" />

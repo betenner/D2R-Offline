@@ -25,7 +25,7 @@ Unzip and copy **both** `D2ROffline.exe` and `patches.txt` to your Diablo II: Re
 
 1. A cmd window should open and begin the patching process, then prompt you to hit any key to continue, then the game should open. You can then close the cmd window.
 
-1. When loading a character, use the TCP/IP button and host a game, double clicking the character name or clicking Play will not work by default. See the `-FixLocalSave` argument under [Usage](#Usage) if you would like to edit your saves to work in offline mode.
+1. When loading a character, use the TCP/IP button and host a game, double clicking the character name or clicking Play will not work by default. See the `-FixLocalSave` argument under [Usage](#Usage) if you would like to edit your saves to play in offline mode *(including act1 to act5)*.
 
 ## Please see the [FAQ](FAQ.md) if you have any issues.
 
@@ -35,7 +35,7 @@ Unzip and copy **both** `D2ROffline.exe` and `patches.txt` to your Diablo II: Re
 You can run `D2ROffline.exe` with arguments to solve some problems.
 
 ### -FixLocalSave
-`.\D2ROffline.exe -FixLocalSave` This will update your save files to allow you to play your characters in single player mode instead of hosting a TCP/IP game. This argument will not also run the game, it just runs a one-off process.
+`.\D2ROffline.exe -FixLocalSave` This will update your save files to allow you to play your characters in single player mode *(act3 to act5 included)* instead of hosting a TCP/IP game. This argument prevents the game from loading and will just patch your save files.
 
 ### -UpdateKeyBinds
 `.\D2ROffline.exe -UpdateKeyBinds` This will sync your keybindings between characters.

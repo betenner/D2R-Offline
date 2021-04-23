@@ -1,0 +1,59 @@
+# WorkFlow from wolfcon(https://github.com/wolfcon)
+# This is for automatically building solution when a new release creates.
+
+name: Release D2R-Offline
+
+on:
+  # push:
+  #   tags: 
+  #   - 'v*'
+  release:
+    types: [ created ]
+
+jobs:
+
+  build:
+    runs-on: windows-latest 
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    # Install the .NET Core workload
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.0.2
+
+#     # Execute all unit tests in the solution
+#     - name: Execute unit tests
+#       run: dotnet test
+
+    # Build solution and collect useful files
+    - name: Build Solution
+      run: |
+        msbuild /p:Configuration=Release
+        cd src\bin\Release\
+        mkdir D2ROffline
+        copy ..\..\..\readme.md D2ROffline\D2ROffline-readme.md
+        copy ..\..\..\FAQ.md D2ROffline\D2ROffline-FAQ.md
+        move D2ROffline.exe D2ROffline
+        move patches.txt D2ROffline
+        Compress-Archive -Path .\D2ROffline\* -DestinationPath .\D2ROffline
+
+    # Upload: https://github.com/marketplace/actions/upload-artifact
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }} 
+        asset_path: .\src\bin\Release\D2ROffline.zip
+        asset_name: D2ROffline.zip
+        asset_content_type: application/zip

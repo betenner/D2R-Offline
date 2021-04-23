@@ -1,0 +1,45 @@
+# WorkFlow from wolfcon(https://github.com/wolfcon)
+# This is for automatically building solution when new commit is pushed on master branches.
+
+name: Release latest D2R-Offline
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    runs-on: windows-latest 
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    # Install the .NET Core workload
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.0.2
+
+#     # Execute all unit tests in the solution
+#     - name: Execute unit tests
+#       run: dotnet test
+
+    - name: Build Solution
+      run: msbuild /p:Configuration=Release
+
+    # Upload: https://github.com/marketplace/actions/upload-artifact
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: D2R-Offline-latest
+        path: src\bin\Release
